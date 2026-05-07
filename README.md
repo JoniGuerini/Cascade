@@ -29,15 +29,25 @@ The catch: buying a higher-tier generator **consumes** the lower-tier ones, so y
 It's a single self-contained HTML file. Just open it:
 
 ```bash
-open cascade-game.html
+open index.html
 ```
 
 Or serve it with any static HTTP server:
 
 ```bash
 python3 -m http.server 8000
-# then visit http://localhost:8000/cascade-game.html
+# then visit http://localhost:8000
 ```
+
+## Deploying to Vercel
+
+This is a static site with no build step, so deployment is one-click:
+
+1. Push the repo to GitHub (already configured)
+2. Go to [vercel.com/new](https://vercel.com/new) and import the repo
+3. Leave all defaults (no framework preset needed) and click Deploy
+
+Vercel will serve `index.html` at the root of your domain.
 
 ## Tech
 
