@@ -142,13 +142,17 @@ html.freemode .cost-prev {
   opacity: 0.5;
 }
 
-.hero { flex: none; padding: 14px 18px 18px; }
-.hero-top {
+.controls-card {
+  flex: none;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+}
+.resources-card {
+  flex: none;
+  padding: 14px 18px 18px;
 }
 .logo {
   display: flex; align-items: center; gap: 10px;
@@ -230,7 +234,7 @@ html.dark .hero-btn:hover {
 .hero-btn:active { transform: scale(0.97); }
 .hero-btn .ti { font-size: 13px; }
 
-.hero h1 {
+.resources-card h1 {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-2);
@@ -238,7 +242,7 @@ html.dark .hero-btn:hover {
   letter-spacing: 0.1em;
   margin: 0 0 6px;
 }
-.hero .big {
+.resources-card .big {
   font-size: 32px;
   font-weight: 500;
   letter-spacing: -0.04em;
@@ -247,18 +251,19 @@ html.dark .hero-btn:hover {
   font-family: 'Geist Mono', monospace;
   font-feature-settings: 'tnum';
 }
-.hero .rate {
+.resources-card .rate {
   margin-top: 8px;
   font-size: 13px;
   color: var(--text-2);
   font-weight: 500;
   display: flex; align-items: center; gap: 6px;
 }
-.hero .rate .num {
+.resources-card .rate .num {
   color: var(--pos);
   font-family: 'Geist Mono', monospace;
   font-feature-settings: 'tnum';
 }
+.resource + .resource { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--hairline); }
 
 .gen-title-card {
   flex: none;
@@ -604,9 +609,9 @@ html.dark .btn-modal.danger {
 }
 
 @media (max-width: 720px) {
-  .hero { padding: 14px 16px; }
-  .hero-top { margin-bottom: 12px; }
-  .hero .big { font-size: 28px; }
+  .controls-card { padding: 10px 14px; }
+  .resources-card { padding: 14px 16px; }
+  .resources-card .big { font-size: 28px; }
   .play-time span:not(.ti) { display: none; }
   .play-time .ti { font-size: 14px; }
   .hero-btn span { display: none; }
@@ -634,34 +639,38 @@ html.dark .btn-modal.danger {
 
 <div class="app">
 
-  <div class="card hero fade-in">
-    <div class="hero-top">
-      <div class="logo">
-        <div class="logo-mark">C</div>
-        <span>Cascade</span>
-      </div>
-      <div class="hero-controls">
-        <span class="play-time">
-          <i class="ti ti-activity"></i>
-          <span id="fps-text">— fps</span>
-        </span>
-        <span class="play-time">
-          <i class="ti ti-clock"></i>
-          <span id="elapsed-text">0s</span>
-        </span>
-        <button class="hero-btn" id="reset" aria-label="Reset progress">
-          <i class="ti ti-refresh"></i>
-          <span>Reset</span>
-        </button>
-        <button class="icon-btn" id="freemode-toggle" aria-label="Toggle free mode">
-          <i class="ti ti-bolt"></i>
-        </button>
-        <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
-          <i class="ti ti-sun" id="theme-icon"></i>
-        </button>
-      </div>
+  <div class="card controls-card fade-in">
+    <div class="logo">
+      <div class="logo-mark">C</div>
+      <span>Cascade</span>
     </div>
-    <div>
+    <div class="hero-controls">
+      <span class="play-time">
+        <i class="ti ti-activity"></i>
+        <span id="fps-text">— fps</span>
+      </span>
+      <span class="play-time">
+        <i class="ti ti-clock"></i>
+        <span id="elapsed-text">0s</span>
+      </span>
+      <button class="hero-btn" id="reset" aria-label="Reset progress">
+        <i class="ti ti-refresh"></i>
+        <span>Reset</span>
+      </button>
+      <button class="icon-btn" id="autobuy-toggle" aria-label="Toggle auto-buy">
+        <i class="ti ti-player-play"></i>
+      </button>
+      <button class="icon-btn" id="freemode-toggle" aria-label="Toggle free mode">
+        <i class="ti ti-bolt"></i>
+      </button>
+      <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+        <i class="ti ti-sun" id="theme-icon"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card resources-card fade-in" style="animation-delay:.04s">
+    <div class="resource">
       <h1>Energy</h1>
       <p class="big" id="energy">10</p>
       <p class="rate"><span class="num" id="rate">+0</span> per second</p>
@@ -1092,6 +1101,7 @@ function loop(now) {
   const dt = Math.min((now - lastTick) / 1000, 0.1);
   lastTick = now;
   simulate(dt);
+  if (autoBuy) tryAutoBuy();
   render();
   fpsFrames++;
   if (now - fpsLast >= 500) {
@@ -1217,6 +1227,28 @@ freemodeBtn.addEventListener('click', () => {
   applyFreeMode();
 });
 applyFreeMode();
+
+let autoBuy = localStorage.getItem('cascade-autobuy') === '1';
+const autobuyBtn = document.getElementById('autobuy-toggle');
+function applyAutoBuy() { autobuyBtn.classList.toggle('active', autoBuy); }
+autobuyBtn.addEventListener('click', () => {
+  autoBuy = !autoBuy;
+  localStorage.setItem('cascade-autobuy', autoBuy ? '1' : '0');
+  applyAutoBuy();
+});
+applyAutoBuy();
+
+function tryAutoBuy() {
+  for (let i = 0; i < state.bought.length; i++) {
+    if (state.bought[i].lte(0)) {
+      if (canAffordOne(i)) buy(i, 1);
+      return;
+    }
+  }
+  const next = state.bought.length;
+  ensureTier(next);
+  if (canAffordOne(next)) buy(next, 1);
+}
 
 render();
 requestAnimationFrame(loop);
