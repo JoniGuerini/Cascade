@@ -1166,10 +1166,8 @@ function save() {
 }
 const saveInterval = setInterval(save, 5000);
 window.addEventListener('beforeunload', () => { if (!isResetting) save(); });
-window.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden' && !isResetting) save();
-});
 
+let lastVisibleAt = Date.now();
 let wakeLock = null;
 async function requestWakeLock() {
   if ('wakeLock' in navigator) {
@@ -1180,8 +1178,15 @@ async function requestWakeLock() {
   }
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && wakeLock === null) {
-    requestWakeLock();
+  if (document.visibilityState === 'hidden') {
+    if (!isResetting) save();
+    lastVisibleAt = Date.now();
+  } else if (document.visibilityState === 'visible') {
+    const elapsedMs = Math.min(Date.now() - lastVisibleAt, MAX_OFFLINE_HOURS * 3600 * 1000);
+    if (elapsedMs > 500) simulate(elapsedMs / 1000);
+    lastVisibleAt = Date.now();
+    lastTick = performance.now();
+    if (wakeLock === null) requestWakeLock();
   }
 });
 requestWakeLock();
