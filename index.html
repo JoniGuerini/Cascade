@@ -156,7 +156,11 @@ html.freemode .cost-prev {
 .resources-card {
   flex: none;
   padding: 14px 18px 18px;
+  display: flex;
+  gap: 24px;
 }
+.resource { flex: 1; min-width: 0; }
+.resource + .resource { padding-left: 24px; border-left: 1px solid var(--hairline); }
 .logo {
   display: flex; align-items: center; gap: 10px;
   font-weight: 600;
@@ -271,7 +275,6 @@ html.dark .hero-btn:hover {
   font-family: 'Geist Mono', monospace;
   font-feature-settings: 'tnum';
 }
-.resource + .resource { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--hairline); }
 
 .gen-title-card {
   flex: none;
@@ -296,7 +299,12 @@ html.dark .hero-btn:hover {
 }
 .col-headers > div:nth-child(2),
 .col-headers > div:nth-child(3) { text-align: center; }
-.cost-header { text-align: center; }
+.cost-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.cost-header > span { text-align: center; }
 
 .gen-list {
   flex: 1;
@@ -390,14 +398,18 @@ html.dark .hero-btn:hover {
 .gen-num.dim { color: var(--text-2); }
 
 .cost-group {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
   font-family: 'Geist Mono', monospace;
   font-feature-settings: 'tnum';
 }
+.cost-group > * { text-align: center; justify-self: center; }
+.cost-energy { grid-column: 1; }
+.cost-prev { grid-column: 2; }
+.cost-sparks { grid-column: 3; }
 .cost-energy, .cost-prev {
   font-weight: 500;
   font-size: 13px;
@@ -408,6 +420,19 @@ html.dark .hero-btn:hover {
 .cost-prev { color: var(--text-2); white-space: nowrap; }
 .cost-prev.muted { color: var(--text-3); }
 .cost-prev.lacking { color: var(--neg); }
+.cost-sparks {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.cost-sparks .ti { font-size: 13px; }
+.cost-sparks.lacking { color: var(--neg); }
 
 .buy-btn {
   padding: 8px 0;
@@ -573,6 +598,173 @@ html.dark .buy-btn.afford:hover {
   font-family: inherit;
   transition: box-shadow .15s, transform .1s;
 }
+.btn-modal.accent {
+  background: var(--accent);
+  color: white;
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 2px 5px rgba(0,0,0,.2),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .btn-modal.accent {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 2px 6px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.btn-modal.accent:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -1px 0 rgba(0,0,0,.2),
+    0 4px 14px rgba(232,93,57,.4),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+.btn-modal.accent:active { transform: scale(.98); }
+
+.setup-icon { background: var(--accent-soft); color: var(--accent); }
+.setup-card { max-width: 460px; }
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.mode-card {
+  background: var(--bg-soft);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 14px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-1);
+  box-shadow: var(--shadow-pill);
+  transition: box-shadow .2s, transform .1s, background .2s, color .2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.mode-card:hover { box-shadow: var(--shadow-lg); }
+.mode-card:active { transform: scale(.98); }
+.mode-card .ti {
+  font-size: 24px;
+  color: var(--text-2);
+  margin-bottom: 4px;
+  transition: color .2s;
+}
+.mode-card .mode-name {
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.mode-card .mode-desc {
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.mode-card.selected {
+  background: var(--accent);
+  color: white;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 4px 14px rgba(232,93,57,.35),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .mode-card.selected {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 4px 16px rgba(255,128,96,.32),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.mode-card.selected .ti { color: white; }
+.mode-card.selected .mode-desc { color: rgba(255,255,255,.85); }
+.setup-option {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-soft);
+  border-radius: 10px;
+  box-shadow: var(--shadow-pill);
+  margin-bottom: 10px;
+}
+.setup-text { flex: 1; min-width: 0; }
+.setup-name {
+  font-weight: 500;
+  font-size: 13.5px;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.setup-tag {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.setup-desc {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.setup-desc strong { color: var(--text-1); font-weight: 500; }
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-pill);
+  border-radius: 22px;
+  box-shadow: var(--shadow-pill);
+  transition: background .2s;
+}
+.slider::before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform .2s;
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(16px); }
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .btn-modal.cancel {
   background: var(--btn-bg);
   color: var(--text-1);
@@ -677,8 +869,13 @@ html.dark .btn-modal.danger {
   <div class="card resources-card fade-in" style="animation-delay:.04s">
     <div class="resource">
       <h1>Energy</h1>
-      <p class="big" id="energy">10</p>
+      <p class="big" id="energy">1</p>
       <p class="rate"><span class="num" id="rate">+0</span> per second</p>
+    </div>
+    <div class="resource">
+      <h1>Sparks</h1>
+      <p class="big" id="sparks">1</p>
+      <p class="rate"><span class="num" id="spark-rate">+0</span> per second</p>
     </div>
   </div>
 
@@ -704,7 +901,7 @@ html.dark .btn-modal.danger {
     <div>Tier</div>
     <div>Owned</div>
     <div>Rate</div>
-    <div class="cost-header">Cost</div>
+    <div class="cost-header"><span>Cost</span></div>
     <div></div>
     <div></div>
   </div>
@@ -713,6 +910,41 @@ html.dark .btn-modal.danger {
     <div id="gen-rows"></div>
   </div>
 
+</div>
+
+<div class="modal-backdrop" id="setup-modal" hidden>
+  <div class="modal-card setup-card">
+    <div class="modal-icon setup-icon">
+      <i class="ti ti-sparkles"></i>
+    </div>
+    <h3>Customize your run</h3>
+    <p class="modal-intro">Pick a game mode — your choice is final for this run.</p>
+    <div class="mode-grid">
+      <button type="button" class="mode-card" data-mode="normal">
+        <i class="ti ti-flame"></i>
+        <div class="mode-name">Normal</div>
+        <div class="mode-desc">Buying a generator consumes units of the previous tier. The full cascade challenge.</div>
+      </button>
+      <button type="button" class="mode-card selected" data-mode="easy">
+        <i class="ti ti-feather"></i>
+        <div class="mode-name">Easy</div>
+        <div class="mode-desc">Skip the previous-tier requirement. Energy alone unlocks any tier.</div>
+      </button>
+    </div>
+    <div class="setup-option">
+      <div class="setup-text">
+        <div class="setup-name">Auto-buy</div>
+        <div class="setup-desc">Automatically buy 1 of the next generator when you can afford it. You can toggle this anytime.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="setup-autobuy">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal accent" id="setup-start">Start playing</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="modal" hidden>
@@ -736,6 +968,7 @@ html.dark .btn-modal.danger {
 
 <script>
 const PROD_RATE = 0.1;
+const SPARK_RATE = 1; // sparks per second once Gen 1 is unlocked
 const SAVE_KEY = 'cascade-save-v5';
 const D = (v) => new Decimal(v);
 const D0 = D(0);
@@ -763,9 +996,11 @@ function tierInfo(idx) {
 }
 
 let isResetting = false;
+let isInSetup = localStorage.getItem('cascade-needs-setup') === '1';
 
 let state = {
   energy: D1,
+  sparks: D1,
   gens: [D0],
   bought: [D0],
   startTime: Date.now(),
@@ -778,6 +1013,7 @@ if (saved) {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed.gens) && Array.isArray(parsed.bought)) {
       state.energy = parsed.energy != null ? D(parsed.energy) : D1;
+      state.sparks = parsed.sparks != null ? D(parsed.sparks) : D1;
       state.gens = parsed.gens.map(g => D(g));
       state.bought = parsed.bought.map(b => D(b));
       while (state.gens.length < state.bought.length) state.gens.push(D0);
@@ -785,7 +1021,7 @@ if (saved) {
       state.startTime = parsed.startTime || Date.now();
       state.lastSave = parsed.lastSave || Date.now();
       const offlineMs = Math.max(0, Date.now() - state.lastSave);
-      if (offlineMs > 1000) simulate(offlineMs / 1000);
+      if (offlineMs > 1000 && !isInSetup) simulate(offlineMs / 1000);
     }
   } catch(e) { console.error('save load failed', e); }
 }
@@ -865,6 +1101,7 @@ function canAffordOne(idx) {
   const e = costOf(idx);
   const p = prevGenNeeded(idx);
   if (state.energy.lt(e)) return false;
+  if (state.sparks.lt(1)) return false;
   if (!freeMode && idx > 0 && (state.gens[idx - 1] || D0).lt(p)) return false;
   return true;
 }
@@ -873,14 +1110,16 @@ function maxAffordable(idx) {
   const e = costOf(idx);
   const p = prevGenNeeded(idx);
   const maxByEnergy = state.energy.div(e).floor();
+  const maxBySparks = state.sparks.floor();
   let maxByPrev = null;
   if (!freeMode && idx > 0 && p.gt(0)) {
     maxByPrev = (state.gens[idx - 1] || D0).div(p).floor();
   }
   let count = maxByEnergy;
+  if (maxBySparks.lt(count)) count = maxBySparks;
   if (maxByPrev !== null && maxByPrev.lt(count)) count = maxByPrev;
   if (count.lt(0)) count = D0;
-  return { count, energyCost: count.mul(e), prevCost: count.mul(p) };
+  return { count, energyCost: count.mul(e), prevCost: count.mul(p), sparkCost: count };
 }
 
 function simulate(dt) {
@@ -890,6 +1129,9 @@ function simulate(dt) {
     state.gens[i - 1] = state.gens[i - 1].add(state.gens[i].mul(factor));
   }
   state.energy = state.energy.add(state.gens[0].mul(factor));
+  if (state.bought[0] && state.bought[0].gt(0)) {
+    state.sparks = state.sparks.add(SPARK_RATE * dt);
+  }
 }
 
 function buy(idx, count) {
@@ -898,12 +1140,14 @@ function buy(idx, count) {
     const m = maxAffordable(idx);
     if (m.count.lte(0)) return;
     state.energy = state.energy.sub(m.energyCost);
+    state.sparks = state.sparks.sub(m.sparkCost);
     if (!freeMode && idx > 0) state.gens[idx - 1] = state.gens[idx - 1].sub(m.prevCost);
     state.gens[idx] = state.gens[idx].add(m.count);
     state.bought[idx] = state.bought[idx].add(m.count);
   } else {
     if (!canAffordOne(idx)) return;
     state.energy = state.energy.sub(costOf(idx));
+    state.sparks = state.sparks.sub(1);
     if (!freeMode && idx > 0) state.gens[idx - 1] = state.gens[idx - 1].sub(prevGenNeeded(idx));
     state.gens[idx] = state.gens[idx].add(1);
     state.bought[idx] = state.bought[idx].add(1);
@@ -949,6 +1193,7 @@ function addRow(idx) {
     <div class="cost-group">
       <span class="cost-energy"></span>
       <span class="cost-prev"></span>
+      <span class="cost-sparks"><i class="ti ti-sparkles"></i>1</span>
     </div>
     <div><button type="button" class="buy-btn b1">Buy 1</button></div>
     <div><button type="button" class="buy-btn bmax">Max</button></div>
@@ -965,6 +1210,7 @@ function addRow(idx) {
     rate: row.querySelector('.rate'),
     costEnergy: row.querySelector('.cost-energy'),
     costPrev: row.querySelector('.cost-prev'),
+    costSparks: row.querySelector('.cost-sparks'),
     buy1: row.querySelector('.b1'),
     buyMax: row.querySelector('.bmax'),
   };
@@ -980,6 +1226,9 @@ let lastBadgeWidth = '38px';
 function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
   document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE));
+  document.getElementById('sparks').textContent = fmt(state.sparks);
+  const sparksFlowing = state.bought[0] && state.bought[0].gt(0);
+  document.getElementById('spark-rate').textContent = sparksFlowing ? '+' + SPARK_RATE : '+0';
   const maxTier = state.bought.filter(b => b.gt(0)).length;
   const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
   if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
@@ -1061,7 +1310,8 @@ function render() {
     const prevCost = prevGenNeeded(idx);
     const hasEnergy = state.energy.gte(cost);
     const hasPrev = freeMode || idx === 0 || (state.gens[idx - 1] || D0).gte(prevCost);
-    const canAfford = hasEnergy && hasPrev;
+    const hasSparks = state.sparks.gte(1);
+    const canAfford = hasEnergy && hasPrev && hasSparks;
     const max = maxAffordable(idx);
     const owned = state.gens[idx] || D0;
     const isBought = (state.bought[idx] || D0).gt(0);
@@ -1081,6 +1331,7 @@ function render() {
     r.costPrev.textContent = showPrev ? fmt(prevCost) + ' G' + idx : '';
     r.costPrev.style.display = showPrev ? '' : 'none';
     r.costPrev.classList.toggle('lacking', showPrev && !hasPrev);
+    r.costSparks.classList.toggle('lacking', !hasSparks);
 
     if (r.buy1.disabled !== !canAfford) r.buy1.disabled = !canAfford;
     r.buy1.classList.toggle('afford', canAfford);
@@ -1090,7 +1341,7 @@ function render() {
     if (r.buyMax.textContent !== maxText) r.buyMax.textContent = maxText;
   }
 
-  document.getElementById('elapsed-text').textContent = formatElapsed(Math.floor((Date.now() - state.startTime) / 1000));
+  document.getElementById('elapsed-text').textContent = formatElapsed(isInSetup ? 0 : Math.floor((Date.now() - state.startTime) / 1000));
 }
 
 function formatElapsed(elapsed) {
@@ -1130,8 +1381,10 @@ const fpsEl = document.getElementById('fps-text');
 function loop(now) {
   const dt = Math.min((now - lastTick) / 1000, 0.1);
   lastTick = now;
-  simulate(dt);
-  if (autoBuy) tryAutoBuy();
+  if (!isInSetup) {
+    simulate(dt);
+    if (autoBuy) tryAutoBuy();
+  }
   render();
   fpsFrames++;
   if (now - fpsLast >= 500) {
@@ -1177,7 +1430,11 @@ modal.addEventListener('click', (e) => {
 });
 modalConfirm.addEventListener('click', () => {
   isResetting = true;
-  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  try {
+    localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem('cascade-freemode-locked');
+    localStorage.setItem('cascade-needs-setup', '1');
+  } catch(e) {}
   location.reload();
 });
 
@@ -1186,11 +1443,12 @@ document.addEventListener('keydown', (e) => {
 });
 
 function save() {
-  if (isResetting) return;
+  if (isResetting || isInSetup) return;
   state.lastSave = Date.now();
   try {
     const serialized = {
       energy: state.energy.toString(),
+      sparks: state.sparks.toString(),
       gens: state.gens.map(g => g.toString()),
       bought: state.bought.map(b => b.toString()),
       startTime: state.startTime,
@@ -1223,7 +1481,7 @@ document.addEventListener('visibilitychange', () => {
     lastVisibleAt = Date.now();
   } else if (document.visibilityState === 'visible') {
     const elapsedMs = Math.max(0, Date.now() - lastVisibleAt);
-    if (elapsedMs > 500) simulate(elapsedMs / 1000);
+    if (elapsedMs > 500 && !isInSetup) simulate(elapsedMs / 1000);
     lastVisibleAt = Date.now();
     lastTick = performance.now();
     if (wakeLock === null) requestWakeLock();
@@ -1248,10 +1506,16 @@ setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
 
 const freemodeBtn = document.getElementById('freemode-toggle');
 function applyFreeMode() {
+  const locked = localStorage.getItem('cascade-freemode-locked') === '1';
   freemodeBtn.classList.toggle('active', freeMode);
+  freemodeBtn.disabled = locked;
+  freemodeBtn.title = locked
+    ? (freeMode ? 'Easy mode locked on for this run' : 'Easy mode locked off — hard mode for this run')
+    : '';
   html.classList.toggle('freemode', freeMode);
 }
 freemodeBtn.addEventListener('click', () => {
+  if (localStorage.getItem('cascade-freemode-locked') === '1') return;
   freeMode = !freeMode;
   localStorage.setItem('cascade-freemode', freeMode ? '1' : '0');
   applyFreeMode();
@@ -1267,6 +1531,40 @@ autobuyBtn.addEventListener('click', () => {
   applyAutoBuy();
 });
 applyAutoBuy();
+
+// Setup modal — shown after a reset, before the new run begins
+(function setupModalInit() {
+  if (localStorage.getItem('cascade-needs-setup') !== '1') return;
+  const setupModal = document.getElementById('setup-modal');
+  const setupAutoBuy = document.getElementById('setup-autobuy');
+  const setupStart = document.getElementById('setup-start');
+  const modeCards = setupModal.querySelectorAll('.mode-card');
+  let selectedMode = 'easy';
+  modeCards.forEach(card => {
+    card.addEventListener('click', () => {
+      selectedMode = card.dataset.mode;
+      modeCards.forEach(c => c.classList.toggle('selected', c.dataset.mode === selectedMode));
+    });
+  });
+  setupAutoBuy.checked = false;
+  setupModal.removeAttribute('hidden');
+  setupStart.addEventListener('click', () => {
+    autoBuy = setupAutoBuy.checked;
+    freeMode = selectedMode === 'easy';
+    localStorage.setItem('cascade-autobuy', autoBuy ? '1' : '0');
+    localStorage.setItem('cascade-freemode', freeMode ? '1' : '0');
+    localStorage.setItem('cascade-freemode-locked', '1');
+    localStorage.removeItem('cascade-needs-setup');
+    state.startTime = Date.now();
+    state.lastSave = Date.now();
+    lastVisibleAt = Date.now();
+    lastTick = performance.now();
+    isInSetup = false;
+    applyAutoBuy();
+    applyFreeMode();
+    setupModal.setAttribute('hidden', '');
+  });
+})();
 
 document.getElementById('scroll-top').addEventListener('click', () => {
   scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
