@@ -729,7 +729,6 @@ const D = (v) => new Decimal(v);
 const D0 = D(0);
 const D1 = D(1);
 const THEME_KEY = 'cascade-theme';
-const MAX_OFFLINE_HOURS = 12;
 
 function nameForTier(idx) {
   return 'Generator ' + (idx + 1);
@@ -773,7 +772,7 @@ if (saved) {
       while (state.bought.length < state.gens.length) state.bought.push(D0);
       state.startTime = parsed.startTime || Date.now();
       state.lastSave = parsed.lastSave || Date.now();
-      const offlineMs = Math.min(Date.now() - state.lastSave, MAX_OFFLINE_HOURS * 3600 * 1000);
+      const offlineMs = Math.max(0, Date.now() - state.lastSave);
       if (offlineMs > 1000) simulate(offlineMs / 1000);
     }
   } catch(e) { console.error('save load failed', e); }
@@ -1192,7 +1191,7 @@ document.addEventListener('visibilitychange', () => {
     if (!isResetting) save();
     lastVisibleAt = Date.now();
   } else if (document.visibilityState === 'visible') {
-    const elapsedMs = Math.min(Date.now() - lastVisibleAt, MAX_OFFLINE_HOURS * 3600 * 1000);
+    const elapsedMs = Math.max(0, Date.now() - lastVisibleAt);
     if (elapsedMs > 500) simulate(elapsedMs / 1000);
     lastVisibleAt = Date.now();
     lastTick = performance.now();
