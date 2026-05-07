@@ -198,12 +198,17 @@ html.dark .logo-mark {
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: var(--text-3);
+  color: var(--text-2);
   font-family: 'Geist Mono', monospace;
   font-feature-settings: 'tnum';
   white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-pill);
+  box-shadow: var(--shadow-pill);
 }
 .play-time .ti { font-size: 13px; }
+
 
 .hero-btn {
   background: transparent; border: none;
@@ -276,18 +281,7 @@ html.dark .hero-btn:hover {
 }
 .gen-title-card h2 { font-size: 14px; font-weight: 500; margin: 0; }
 .gen-title-card p { font-size: 12px; color: var(--text-2); margin: 3px 0 0; }
-.save-ind {
-  font-size: 11.5px;
-  color: var(--text-3);
-  display: flex; align-items: center; gap: 5px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: var(--bg-pill);
-  box-shadow: var(--shadow-pill);
-  white-space: nowrap;
-}
-.save-ind .ti { font-size: 13px; }
-
+.gen-title-info { display: flex; align-items: center; gap: 14px; }
 .col-headers {
   flex: none;
   display: grid;
@@ -656,6 +650,10 @@ html.dark .btn-modal.danger {
         <i class="ti ti-clock"></i>
         <span id="elapsed-text">0s</span>
       </span>
+      <span class="play-time" id="save-ind">
+        <i class="ti ti-cloud-check"></i>
+        <span id="save-text">saved</span>
+      </span>
       <button class="hero-btn" id="reset" aria-label="Reset progress">
         <i class="ti ti-refresh"></i>
         <span>Reset</span>
@@ -681,9 +679,12 @@ html.dark .btn-modal.danger {
   </div>
 
   <div class="card gen-title-card fade-in" style="animation-delay:.08s">
-    <div>
-      <h2>Generators</h2>
-      <p>Each tier produces the previous one — buy one to unlock the next</p>
+    <div class="gen-title-info">
+      <div class="tier-badge" id="max-tier-text">—</div>
+      <div>
+        <h2>Generators</h2>
+        <p>Each tier produces the previous one — buy one to unlock the next</p>
+      </div>
     </div>
     <div class="gen-title-actions">
       <button class="icon-btn small" id="scroll-top" aria-label="Scroll to top">
@@ -692,10 +693,6 @@ html.dark .btn-modal.danger {
       <button class="icon-btn small" id="scroll-bottom" aria-label="Scroll to bottom">
         <i class="ti ti-arrow-bar-to-down"></i>
       </button>
-      <div class="save-ind" id="save-ind">
-        <i class="ti ti-cloud-check"></i>
-        <span id="save-text">saved</span>
-      </div>
     </div>
   </div>
 
@@ -970,9 +967,13 @@ const VIRTUAL_BUFFER = 5;
 let measuredRowHeight = 66;
 let lastVisibleCount = 0;
 
+const maxTierEl = document.getElementById('max-tier-text');
 function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
   document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE));
+  const maxTier = state.bought.filter(b => b.gt(0)).length;
+  const maxTierText = maxTier > 0 ? String(maxTier) : '—';
+  if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
 
   const visible = getVisibleTierIndices();
 
