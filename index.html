@@ -843,6 +843,10 @@ function fmtInt(n) {
   return fmt(n);
 }
 
+function fmtTier(n) {
+  return n.toLocaleString('pt-BR');
+}
+
 function costOf(idx) {
   ensureTier(idx);
   return energyCostFor(idx);
@@ -935,7 +939,7 @@ function addRow(idx) {
   const row = document.createElement('div');
   row.className = 'gen-row';
   row.innerHTML = `
-    <div><div class="tier-badge">${idx + 1}</div></div>
+    <div><div class="tier-badge">${fmtTier(idx + 1)}</div></div>
     <div class="gen-num owned"></div>
     <div class="gen-num rate dim"></div>
     <div class="cost-group">
@@ -972,7 +976,7 @@ function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
   document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE));
   const maxTier = state.bought.filter(b => b.gt(0)).length;
-  const maxTierText = maxTier > 0 ? String(maxTier) : '—';
+  const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
   if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
 
   const visible = getVisibleTierIndices();
