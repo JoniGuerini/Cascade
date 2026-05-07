@@ -127,6 +127,9 @@ button { font-family: inherit; }
 .icon-btn:hover { color: var(--text-1); box-shadow: var(--shadow-lg); }
 .icon-btn:active { transform: scale(.96); box-shadow: var(--shadow-press); }
 .icon-btn .ti { font-size: 17px; }
+.icon-btn.small { width: 30px; height: 30px; border-radius: 8px; }
+.icon-btn.small .ti { font-size: 15px; }
+.gen-title-actions { display: flex; align-items: center; gap: 8px; }
 .icon-btn.active {
   background: var(--accent);
   color: white;
@@ -682,9 +685,17 @@ html.dark .btn-modal.danger {
       <h2>Generators</h2>
       <p>Each tier produces the previous one — buy one to unlock the next</p>
     </div>
-    <div class="save-ind" id="save-ind">
-      <i class="ti ti-cloud-check"></i>
-      <span id="save-text">saved</span>
+    <div class="gen-title-actions">
+      <button class="icon-btn small" id="scroll-top" aria-label="Scroll to top">
+        <i class="ti ti-arrow-bar-to-up"></i>
+      </button>
+      <button class="icon-btn small" id="scroll-bottom" aria-label="Scroll to bottom">
+        <i class="ti ti-arrow-bar-to-down"></i>
+      </button>
+      <div class="save-ind" id="save-ind">
+        <i class="ti ti-cloud-check"></i>
+        <span id="save-text">saved</span>
+      </div>
     </div>
   </div>
 
@@ -1236,6 +1247,13 @@ autobuyBtn.addEventListener('click', () => {
   applyAutoBuy();
 });
 applyAutoBuy();
+
+document.getElementById('scroll-top').addEventListener('click', () => {
+  scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.getElementById('scroll-bottom').addEventListener('click', () => {
+  scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+});
 
 function tryAutoBuy() {
   for (let i = 0; i < state.bought.length; i++) {
