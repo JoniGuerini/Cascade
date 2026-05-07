@@ -285,7 +285,7 @@ html.dark .hero-btn:hover {
 .col-headers {
   flex: none;
   display: grid;
-  grid-template-columns: 56px 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 12px 20px;
   font-size: 10.5px;
@@ -317,7 +317,7 @@ html.dark .hero-btn:hover {
 
 .gen-row {
   display: grid;
-  grid-template-columns: 56px 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 14px 20px;
   align-items: center;
@@ -345,7 +345,9 @@ html.dark .hero-btn:hover {
 }
 
 .tier-badge {
-  width: 38px; height: 38px;
+  min-width: var(--tier-badge-min, 38px);
+  height: 38px;
+  padding: 0 10px;
   border-radius: 10px;
   box-shadow: var(--shadow-pill);
   display: flex; align-items: center; justify-content: center;
@@ -356,6 +358,7 @@ html.dark .hero-btn:hover {
   background: var(--btn-bg);
   transition: transform .25s, background .2s, color .2s;
   letter-spacing: 0;
+  box-sizing: border-box;
 }
 .gen-row.has-owned .tier-badge { color: var(--text-1); }
 .tier-badge.pulse { animation: badgePulse .5s ease; }
@@ -972,12 +975,23 @@ let measuredRowHeight = 66;
 let lastVisibleCount = 0;
 
 const maxTierEl = document.getElementById('max-tier-text');
+let lastBadgeWidth = '38px';
 function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
   document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE));
   const maxTier = state.bought.filter(b => b.gt(0)).length;
   const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
   if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
+
+  // Responsive tier badge width based on highest visible tier number
+  const highestVisibleTier = Math.max(state.bought.length, maxTier + 1);
+  const tierStrLen = fmtTier(highestVisibleTier).length;
+  const badgeW = Math.max(38, tierStrLen * 8 + 20);
+  const badgeWStr = badgeW + 'px';
+  if (lastBadgeWidth !== badgeWStr) {
+    document.documentElement.style.setProperty('--tier-badge-min', badgeWStr);
+    lastBadgeWidth = badgeWStr;
+  }
 
   const visible = getVisibleTierIndices();
 
