@@ -130,6 +130,51 @@ button { font-family: inherit; }
 .icon-btn.small { width: 30px; height: 30px; border-radius: 8px; }
 .icon-btn.small .ti { font-size: 15px; }
 .gen-title-actions { display: flex; align-items: center; gap: 8px; }
+
+.amount-segment {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  background: var(--btn-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 3px;
+  gap: 2px;
+  box-sizing: border-box;
+}
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  min-width: 36px;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background .15s, color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+  appearance: none;
+  letter-spacing: 0.01em;
+}
+.seg-btn:hover { color: var(--text-1); }
+.seg-btn.selected {
+  background: var(--bg-page);
+  color: var(--text-1);
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.18),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .seg-btn.selected {
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(0,0,0,.6);
+}
 .icon-btn.active {
   background: var(--accent);
   color: white;
@@ -888,6 +933,12 @@ html.dark .btn-modal.danger {
       </div>
     </div>
     <div class="gen-title-actions">
+      <div class="amount-segment" id="amount-segment">
+        <button class="seg-btn" data-amt="1">1%</button>
+        <button class="seg-btn" data-amt="10">10%</button>
+        <button class="seg-btn" data-amt="50">50%</button>
+        <button class="seg-btn selected" data-amt="100">Max</button>
+      </div>
       <button class="icon-btn small" id="scroll-top" aria-label="Scroll to top">
         <i class="ti ti-arrow-bar-to-up"></i>
       </button>
@@ -1106,7 +1157,7 @@ function canAffordOne(idx) {
   return true;
 }
 
-function maxAffordable(idx) {
+function maxAffordable(idx, pct) {
   const e = costOf(idx);
   const p = prevGenNeeded(idx);
   const maxByEnergy = state.energy.div(e).floor();
@@ -1119,6 +1170,9 @@ function maxAffordable(idx) {
   if (maxBySparks.lt(count)) count = maxBySparks;
   if (maxByPrev !== null && maxByPrev.lt(count)) count = maxByPrev;
   if (count.lt(0)) count = D0;
+  if (pct != null && pct < 100) {
+    count = count.mul(pct).div(100).floor();
+  }
   return { count, energyCost: count.mul(e), prevCost: count.mul(p), sparkCost: count };
 }
 
@@ -1137,7 +1191,7 @@ function simulate(dt) {
 function buy(idx, count) {
   ensureTier(idx);
   if (count === 'max') {
-    const m = maxAffordable(idx);
+    const m = maxAffordable(idx, buyAmountPct);
     if (m.count.lte(0)) return;
     state.energy = state.energy.sub(m.energyCost);
     state.sparks = state.sparks.sub(m.sparkCost);
@@ -1201,7 +1255,29 @@ function addRow(idx) {
 
   rowsContainer.appendChild(row);
 
-  row.querySelector('.b1').addEventListener('click', () => buy(idx, 1));
+  const b1 = row.querySelector('.b1');
+  let holdTimer = null;
+  let holdDelay = 200;
+  function holdTick() {
+    if (!rowCache[idx] || b1.disabled || !canAffordOne(idx)) { holdStop(); return; }
+    buy(idx, 1);
+    holdDelay = Math.max(30, holdDelay * 0.85);
+    holdTimer = setTimeout(holdTick, holdDelay);
+  }
+  function holdStop() {
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    holdDelay = 200;
+  }
+  b1.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || b1.disabled) return;
+    buy(idx, 1);
+    try { b1.setPointerCapture(e.pointerId); } catch(_) {}
+    holdDelay = 200;
+    holdTimer = setTimeout(holdTick, 400);
+  });
+  b1.addEventListener('pointerup', holdStop);
+  b1.addEventListener('pointercancel', holdStop);
+
   row.querySelector('.bmax').addEventListener('click', () => buy(idx, 'max'));
 
   rowCache[idx] = {
@@ -1312,7 +1388,7 @@ function render() {
     const hasPrev = freeMode || idx === 0 || (state.gens[idx - 1] || D0).gte(prevCost);
     const hasSparks = state.sparks.gte(1);
     const canAfford = hasEnergy && hasPrev && hasSparks;
-    const max = maxAffordable(idx);
+    const max = maxAffordable(idx, buyAmountPct);
     const owned = state.gens[idx] || D0;
     const isBought = (state.bought[idx] || D0).gt(0);
     const tierRate = owned.mul(PROD_RATE);
@@ -1572,6 +1648,24 @@ document.getElementById('scroll-top').addEventListener('click', () => {
 document.getElementById('scroll-bottom').addEventListener('click', () => {
   scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
 });
+
+const VALID_AMOUNTS = [1, 10, 50, 100];
+let buyAmountPct = parseInt(localStorage.getItem('cascade-buy-amount') || '100', 10);
+if (!VALID_AMOUNTS.includes(buyAmountPct)) buyAmountPct = 100;
+const segmentEl = document.getElementById('amount-segment');
+function updateSegmentUI() {
+  segmentEl.querySelectorAll('.seg-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.amt, 10) === buyAmountPct);
+  });
+}
+segmentEl.querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    buyAmountPct = parseInt(btn.dataset.amt, 10);
+    localStorage.setItem('cascade-buy-amount', String(buyAmountPct));
+    updateSegmentUI();
+  });
+});
+updateSegmentUI();
 
 function tryAutoBuy() {
   for (let i = 0; i < state.bought.length; i++) {
