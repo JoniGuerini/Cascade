@@ -1429,10 +1429,10 @@ function buyUpgrade(id, cost) {
 function checkMilestones() {
   for (let i = 0; i < state.gens.length; i++) {
     const gen = state.gens[i];
-    if (!gen || gen.lt(1) || !gen.isFinite()) continue;
+    if (!gen || gen.lt(10) || !gen.isFinite()) continue;
     const logVal = gen.log10().toNumber();
     if (!isFinite(logVal)) continue;
-    const claimedNow = Math.floor(logVal) + 1;
+    const claimedNow = Math.floor(logVal);
     const claimed = state.milestonesClaimed[i] || 0;
     if (claimedNow > claimed) {
       state.coins = state.coins.add(claimedNow - claimed);
