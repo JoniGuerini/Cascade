@@ -322,7 +322,14 @@ html.dark .hero-btn:hover {
   color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin: 0 0 6px;
+  margin: 0;
+}
+.resource-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 .resources-card .big {
   font-size: 32px;
@@ -364,7 +371,7 @@ html.dark .hero-btn:hover {
 .col-headers {
   flex: none;
   display: grid;
-  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) auto 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 12px 20px;
   font-size: 10.5px;
@@ -373,8 +380,9 @@ html.dark .hero-btn:hover {
   letter-spacing: 0.08em;
   color: var(--text-3);
 }
-.col-headers > div:nth-child(2),
-.col-headers > div:nth-child(3) { text-align: center; }
+.col-headers > div:nth-child(2) { text-align: center; }
+.col-headers > div:nth-child(3),
+.col-headers > div:nth-child(4) { text-align: center; }
 .cost-header {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -401,7 +409,7 @@ html.dark .hero-btn:hover {
 
 .gen-row {
   display: grid;
-  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) auto 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 14px 20px;
   align-items: center;
@@ -454,6 +462,94 @@ html.dark .hero-btn:hover {
   transition: transform .25s, background .2s, color .2s;
   letter-spacing: 0;
   box-sizing: border-box;
+}
+.upgrade-cell { display: flex; align-items: center; justify-content: center; }
+.upgrade-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: var(--bg-pill);
+  color: var(--text-3);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-pill);
+  transition: box-shadow .15s, color .15s, background .2s, transform .1s;
+}
+.upgrade-pill:hover { box-shadow: var(--shadow); color: var(--text-1); }
+.upgrade-pill:active { transform: scale(.96); }
+.upgrade-pill.has-level { color: var(--accent); }
+.gen-row.is-next .upgrade-pill {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.upgrade-popover {
+  position: fixed;
+  z-index: 200;
+  min-width: 260px;
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: popoverFade .18s ease-out;
+}
+@keyframes popoverFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.upgrade-popover[hidden] { display: none; }
+.upgrade-popover-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.upgrade-section {
+  background: var(--bg-soft);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: var(--shadow-pill);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.upgrade-section[hidden] { display: none; }
+.upgrade-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.upgrade-section-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.upgrade-section-state {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.btn-modal.accent.upgrade-buy {
+  width: 100%;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
 }
 .gen-row.has-owned .tier-badge { color: var(--text-1); }
 .tier-badge.pulse { animation: badgePulse .5s ease; }
@@ -1018,13 +1114,13 @@ html.dark .btn-modal.danger {
   .hero-btn { padding: 8px; }
   .hero-btn .ti { font-size: 14px; }
   .col-headers, .gen-row {
-    grid-template-columns: 36px 1fr 60px 70px 76px;
+    grid-template-columns: 36px auto 1fr 70px 76px;
     padding: 12px 14px;
     gap: 8px;
   }
-  .col-headers > div:nth-child(3),
-  .col-headers > div:nth-child(7),
-  .gen-row > div:nth-child(3),
+  .col-headers > div:nth-child(4),
+  .col-headers > div:nth-child(8),
+  .gen-row > div:nth-child(4),
   .gen-row > div:nth-child(7) { display: none; }
   .tier-badge { width: 32px; height: 32px; font-size: 11px; }
   .gen-num { font-size: 12px; }
@@ -1115,12 +1211,18 @@ html.dark .btn-modal.danger {
       <p class="rate"><span class="num" id="rate">+0</span> per second</p>
     </div>
     <div class="resource">
-      <h1>Sparks</h1>
+      <div class="resource-head">
+        <h1>Sparks</h1>
+        <button type="button" class="upgrade-pill" id="sparks-upgrade-pill" title="Upgrade sparks production">+0</button>
+      </div>
       <p class="big" id="sparks">1</p>
       <p class="rate"><span class="num" id="spark-rate">+0</span> per second</p>
     </div>
     <div class="resource">
-      <h1>Coins</h1>
+      <div class="resource-head">
+        <h1>Coins</h1>
+        <button type="button" class="upgrade-pill" id="coins-upgrade-pill" title="Upgrade coins per milestone">+0</button>
+      </div>
       <p class="big" id="coins">0</p>
       <p class="rate-hint">milestone rewards</p>
     </div>
@@ -1152,6 +1254,7 @@ html.dark .btn-modal.danger {
 
   <div class="card col-headers fade-in" style="animation-delay:.12s">
     <div>Tier</div>
+    <div>Lv</div>
     <div>Owned</div>
     <div>Rate</div>
     <div class="cost-header"><span>Cost</span></div>
@@ -1163,6 +1266,30 @@ html.dark .btn-modal.danger {
     <div id="gen-rows"></div>
   </div>
 
+</div>
+
+<div class="upgrade-popover" id="upgrade-popover" hidden>
+  <div class="upgrade-popover-title" id="upg-title">—</div>
+
+  <div class="upgrade-section">
+    <div class="upgrade-section-row">
+      <span class="upgrade-section-name" id="upg-prod-name">Production</span>
+      <span class="upgrade-section-state" id="upg-prod-state">Lv 0 · 1x</span>
+    </div>
+    <button class="btn-modal accent upgrade-buy" id="upg-prod-buy">
+      <span id="upg-prod-buy-text">Upgrade — 1 coin</span>
+    </button>
+  </div>
+
+  <div class="upgrade-section" id="upg-cost-section">
+    <div class="upgrade-section-row">
+      <span class="upgrade-section-name">Cost reduction</span>
+      <span class="upgrade-section-state" id="upg-cost-state">Lv 0 · 100%</span>
+    </div>
+    <button class="btn-modal accent upgrade-buy" id="upg-cost-buy">
+      <span id="upg-cost-buy-text">Upgrade — 1 coin</span>
+    </button>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="setup-modal" hidden>
@@ -1347,11 +1474,20 @@ function fmtTier(n) {
 
 function costOf(idx) {
   ensureTier(idx);
-  return energyCostFor(idx);
+  const base = energyCostFor(idx);
+  const lvl = genCostLevel(idx);
+  if (lvl === 0) return base;
+  const reduced = base.mul(Math.pow(0.5, lvl));
+  return reduced.lt(1) ? D1 : reduced.floor();
 }
 function prevGenNeeded(idx) {
   ensureTier(idx);
-  return prevGenCostFor(idx);
+  const base = prevGenCostFor(idx);
+  if (base.lte(0)) return base;
+  const lvl = genCostLevel(idx);
+  if (lvl === 0) return base;
+  const reduced = base.mul(Math.pow(0.5, lvl));
+  return reduced.lt(1) ? D1 : reduced.floor();
 }
 let freeMode = localStorage.getItem('cascade-freemode') === '1';
 
@@ -1387,11 +1523,11 @@ function simulate(dt) {
   const factor = PROD_RATE * dt;
   const n = state.gens.length;
   for (let i = n - 1; i > 0; i--) {
-    state.gens[i - 1] = state.gens[i - 1].add(state.gens[i].mul(factor));
+    state.gens[i - 1] = state.gens[i - 1].add(state.gens[i].mul(factor * genUpgradeMult(i)));
   }
-  state.energy = state.energy.add(state.gens[0].mul(factor));
+  state.energy = state.energy.add(state.gens[0].mul(factor * genUpgradeMult(0)));
   if (state.bought[0] && state.bought[0].gt(0)) {
-    state.sparks = state.sparks.add(SPARK_RATE * dt);
+    state.sparks = state.sparks.add(SPARK_RATE * sparksUpgradeMult() * dt);
   }
   checkMilestones();
 }
@@ -1426,6 +1562,49 @@ function buyUpgrade(id, cost) {
   return true;
 }
 
+// Per-generator upgrades (production + cost reduction)
+function genUpgradeKey(idx) { return 'gen-' + idx; }
+function genUpgradeLevel(idx) { return getUpgradeLevel(genUpgradeKey(idx)); }
+function genUpgradeMult(idx) { return Math.pow(2, genUpgradeLevel(idx)); }
+function genUpgradeNextCost(idx) { return Math.pow(2, genUpgradeLevel(idx)); }
+function buyGenUpgrade(idx) {
+  return buyUpgrade(genUpgradeKey(idx), genUpgradeNextCost(idx));
+}
+
+// Cost reduction upgrade — halves both energy and prev gen costs each level, clamped to min 1
+function genCostKey(idx) { return 'gen-' + idx + '-cost'; }
+function genCostLevel(idx) { return getUpgradeLevel(genCostKey(idx)); }
+function genCostMult(idx) { return Math.pow(0.5, genCostLevel(idx)); }
+function genCostNextCost(idx) { return Math.pow(2, genCostLevel(idx)); }
+function genCostMaxLevel(idx) {
+  if (idx === 0) return 0; // Gen 1 already at minimum (1 energy, no prev gen)
+  const baseE = Math.pow(10, idx);
+  const baseP = 5 * idx;
+  return Math.ceil(Math.max(Math.log2(baseE), Math.log2(baseP)));
+}
+function genCostAtMax(idx) { return genCostLevel(idx) >= genCostMaxLevel(idx); }
+function buyGenCostUpgrade(idx) {
+  if (genCostAtMax(idx)) return false;
+  return buyUpgrade(genCostKey(idx), genCostNextCost(idx));
+}
+
+// Total upgrade level shown in Lv column = production + cost reduction
+function genTotalUpgradeLevel(idx) { return genUpgradeLevel(idx) + genCostLevel(idx); }
+
+// Resource upgrades — Sparks (production rate) and Coins (per-milestone payout)
+function sparksUpgradeLevel() { return getUpgradeLevel('sparks'); }
+function sparksUpgradeMult() { return Math.pow(2, sparksUpgradeLevel()); }
+function sparksUpgradeNextCost() { return Math.pow(2, sparksUpgradeLevel()); }
+function buySparksUpgrade() {
+  return buyUpgrade('sparks', sparksUpgradeNextCost());
+}
+function coinsUpgradeLevel() { return getUpgradeLevel('coins'); }
+function coinsUpgradeMult() { return Math.pow(2, coinsUpgradeLevel()); }
+function coinsUpgradeNextCost() { return Math.pow(2, coinsUpgradeLevel()); }
+function buyCoinsUpgrade() {
+  return buyUpgrade('coins', coinsUpgradeNextCost());
+}
+
 function checkMilestones() {
   for (let i = 0; i < state.gens.length; i++) {
     const gen = state.gens[i];
@@ -1435,7 +1614,7 @@ function checkMilestones() {
     const claimedNow = Math.floor(logVal);
     const claimed = state.milestonesClaimed[i] || 0;
     if (claimedNow > claimed) {
-      state.coins = state.coins.add(claimedNow - claimed);
+      state.coins = state.coins.add((claimedNow - claimed) * coinsUpgradeMult());
       state.milestonesClaimed[i] = claimedNow;
     }
   }
@@ -1495,6 +1674,7 @@ function addRow(idx) {
   row.className = 'gen-row';
   row.innerHTML = `
     <div><div class="tier-badge">${fmtTier(idx + 1)}</div></div>
+    <div class="upgrade-cell"><button type="button" class="upgrade-pill" title="Upgrade this generator">+0</button></div>
     <div class="gen-num owned"></div>
     <div class="gen-num rate dim"></div>
     <div class="cost-group">
@@ -1507,6 +1687,12 @@ function addRow(idx) {
   `;
 
   rowsContainer.appendChild(row);
+
+  row.querySelector('.upgrade-pill').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!state.bought[idx] || state.bought[idx].lte(0)) return;
+    openUpgradePopover({ type: 'gen', idx }, e.currentTarget);
+  });
 
   const b1 = row.querySelector('.b1');
   let holdTimer = null;
@@ -1540,6 +1726,7 @@ function addRow(idx) {
     costEnergy: row.querySelector('.cost-energy'),
     costPrev: row.querySelector('.cost-prev'),
     costSparks: row.querySelector('.cost-sparks'),
+    upgradeBadge: row.querySelector('.upgrade-pill'),
     buy1: row.querySelector('.b1'),
     buyMax: row.querySelector('.bmax'),
   };
@@ -1554,11 +1741,19 @@ const maxTierEl = document.getElementById('max-tier-text');
 let lastBadgeWidth = '38px';
 function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
-  document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE));
+  document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE * genUpgradeMult(0)));
   document.getElementById('sparks').textContent = fmt(state.sparks);
   const sparksFlowing = state.bought[0] && state.bought[0].gt(0);
-  document.getElementById('spark-rate').textContent = sparksFlowing ? '+' + SPARK_RATE : '+0';
+  document.getElementById('spark-rate').textContent = sparksFlowing ? '+' + fmt(SPARK_RATE * sparksUpgradeMult()) : '+0';
   document.getElementById('coins').textContent = fmt(state.coins);
+  const sparksLvl = sparksUpgradeLevel();
+  const sparksPill = document.getElementById('sparks-upgrade-pill');
+  sparksPill.textContent = '+' + sparksLvl;
+  sparksPill.classList.toggle('has-level', sparksLvl > 0);
+  const coinsLvl = coinsUpgradeLevel();
+  const coinsPill = document.getElementById('coins-upgrade-pill');
+  coinsPill.textContent = '+' + coinsLvl;
+  coinsPill.classList.toggle('has-level', coinsLvl > 0);
   const maxTier = state.bought.filter(b => b.gt(0)).length;
   const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
   if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
@@ -1645,10 +1840,15 @@ function render() {
     const max = maxAffordable(idx, buyAmountPct);
     const owned = state.gens[idx] || D0;
     const isBought = (state.bought[idx] || D0).gt(0);
-    const tierRate = owned.mul(PROD_RATE);
+    const tierRate = owned.mul(PROD_RATE * genUpgradeMult(idx));
 
     r.row.classList.toggle('has-owned', isBought);
     r.row.classList.toggle('is-next', !isBought);
+
+    const lvl = genTotalUpgradeLevel(idx);
+    const lvlText = '+' + lvl;
+    if (r.upgradeBadge.textContent !== lvlText) r.upgradeBadge.textContent = lvlText;
+    r.upgradeBadge.classList.toggle('has-level', lvl > 0);
 
     r.owned.textContent = fmt(owned);
     r.owned.classList.toggle('muted', owned.lt(0.01));
@@ -1964,6 +2164,139 @@ applyFreeMode();
     setupModal.setAttribute('hidden', '');
   });
 })();
+
+// Upgrade popover — supports 3 contexts: gen (per generator), sparks, coins
+const upgradePopover = document.getElementById('upgrade-popover');
+const upgTitle = document.getElementById('upg-title');
+const upgProdName = document.getElementById('upg-prod-name');
+const upgProdState = document.getElementById('upg-prod-state');
+const upgProdBuy = document.getElementById('upg-prod-buy');
+const upgProdBuyText = document.getElementById('upg-prod-buy-text');
+const upgCostSection = document.getElementById('upg-cost-section');
+const upgCostState = document.getElementById('upg-cost-state');
+const upgCostBuy = document.getElementById('upg-cost-buy');
+const upgCostBuyText = document.getElementById('upg-cost-buy-text');
+let upgradePopoverContext = null; // { type: 'gen'|'sparks'|'coins', idx? }
+
+function setBuyText(el, label, cost) {
+  el.textContent = label + ' — ' + fmt(cost) + ' coin' + (cost === 1 ? '' : 's');
+}
+
+function refreshUpgradePopover() {
+  const ctx = upgradePopoverContext;
+  if (!ctx) return;
+
+  if (ctx.type === 'gen') {
+    upgTitle.textContent = 'Generator ' + fmtTier(ctx.idx + 1);
+    upgProdName.textContent = 'Production';
+
+    const pLvl = genUpgradeLevel(ctx.idx);
+    const pMult = Math.pow(2, pLvl);
+    const pCost = genUpgradeNextCost(ctx.idx);
+    upgProdState.textContent = 'Lv ' + pLvl + ' · ' + fmt(pMult) + 'x';
+    setBuyText(upgProdBuyText, 'Upgrade', pCost);
+    upgProdBuy.disabled = !canAffordCoins(pCost);
+
+    upgCostSection.removeAttribute('hidden');
+    const cLvl = genCostLevel(ctx.idx);
+    const cMaxLvl = genCostMaxLevel(ctx.idx);
+    const cPct = Math.round(Math.pow(0.5, cLvl) * 100);
+    upgCostState.textContent = 'Lv ' + cLvl + ' · ' + cPct + '% cost';
+    if (cMaxLvl === 0) {
+      upgCostBuyText.textContent = 'Not available';
+      upgCostBuy.disabled = true;
+    } else if (cLvl >= cMaxLvl) {
+      upgCostBuyText.textContent = 'MAX';
+      upgCostBuy.disabled = true;
+    } else {
+      const cCost = genCostNextCost(ctx.idx);
+      setBuyText(upgCostBuyText, 'Upgrade', cCost);
+      upgCostBuy.disabled = !canAffordCoins(cCost);
+    }
+  } else if (ctx.type === 'sparks') {
+    upgTitle.textContent = 'Sparks';
+    upgProdName.textContent = 'Production rate';
+    const lvl = sparksUpgradeLevel();
+    const cost = sparksUpgradeNextCost();
+    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(SPARK_RATE * Math.pow(2, lvl)) + '/s';
+    setBuyText(upgProdBuyText, 'Upgrade', cost);
+    upgProdBuy.disabled = !canAffordCoins(cost);
+    upgCostSection.setAttribute('hidden', '');
+  } else if (ctx.type === 'coins') {
+    upgTitle.textContent = 'Coins';
+    upgProdName.textContent = 'Reward per milestone';
+    const lvl = coinsUpgradeLevel();
+    const cost = coinsUpgradeNextCost();
+    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(Math.pow(2, lvl)) + ' / milestone';
+    setBuyText(upgProdBuyText, 'Upgrade', cost);
+    upgProdBuy.disabled = !canAffordCoins(cost);
+    upgCostSection.setAttribute('hidden', '');
+  }
+}
+
+function positionUpgradePopover(anchor) {
+  const r = anchor.getBoundingClientRect();
+  const popH = upgradePopover.offsetHeight;
+  const popW = upgradePopover.offsetWidth;
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+  const margin = 16;
+
+  // Vertical: prefer centered to anchor; clamp to viewport
+  let top = r.top + r.height / 2 - popH / 2;
+  if (top + popH > vh - margin) top = vh - margin - popH;
+  if (top < margin) top = margin;
+
+  // Horizontal: prefer right of anchor; flip to left if overflowing
+  let left = r.right + 12;
+  if (left + popW > vw - margin) left = r.left - popW - 12;
+  if (left < margin) left = margin;
+
+  upgradePopover.style.left = left + 'px';
+  upgradePopover.style.top = top + 'px';
+  upgradePopover.style.transform = '';
+}
+
+function openUpgradePopover(ctx, anchor) {
+  upgradePopoverContext = ctx;
+  upgradePopover.removeAttribute('hidden');
+  refreshUpgradePopover();
+  positionUpgradePopover(anchor);
+}
+function closeUpgradePopover() {
+  upgradePopoverContext = null;
+  upgradePopover.setAttribute('hidden', '');
+}
+upgProdBuy.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const ctx = upgradePopoverContext;
+  if (!ctx) return;
+  let ok = false;
+  if (ctx.type === 'gen') ok = buyGenUpgrade(ctx.idx);
+  else if (ctx.type === 'sparks') ok = buySparksUpgrade();
+  else if (ctx.type === 'coins') ok = buyCoinsUpgrade();
+  if (ok) refreshUpgradePopover();
+});
+upgCostBuy.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const ctx = upgradePopoverContext;
+  if (!ctx || ctx.type !== 'gen') return;
+  if (buyGenCostUpgrade(ctx.idx)) refreshUpgradePopover();
+});
+document.addEventListener('click', (e) => {
+  if (!upgradePopoverContext) return;
+  if (!upgradePopover.contains(e.target)) closeUpgradePopover();
+});
+
+// Click handlers for the resource pills
+document.getElementById('sparks-upgrade-pill').addEventListener('click', (e) => {
+  e.stopPropagation();
+  openUpgradePopover({ type: 'sparks' }, e.currentTarget);
+});
+document.getElementById('coins-upgrade-pill').addEventListener('click', (e) => {
+  e.stopPropagation();
+  openUpgradePopover({ type: 'coins' }, e.currentTarget);
+});
 
 document.getElementById('scroll-top').addEventListener('click', () => {
   scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
