@@ -518,10 +518,26 @@ html.dark .hero-btn:hover {
   to   { opacity: 1; }
 }
 .upgrade-popover[hidden] { display: none; }
+.upgrade-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .upgrade-popover-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-1);
+}
+.amount-segment.upg-segment {
+  height: 26px;
+  padding: 2px;
+}
+.amount-segment.upg-segment .seg-btn {
+  height: 22px;
+  padding: 0 7px;
+  min-width: 28px;
+  font-size: 10.5px;
 }
 .upgrade-section {
   background: var(--bg-soft);
@@ -1292,7 +1308,15 @@ html.dark .btn-modal.danger {
 </div>
 
 <div class="upgrade-popover" id="upgrade-popover" hidden>
-  <div class="upgrade-popover-title" id="upg-title">—</div>
+  <div class="upgrade-popover-header">
+    <div class="upgrade-popover-title" id="upg-title">—</div>
+    <div class="amount-segment upg-segment" id="upg-amount-segment">
+      <button class="seg-btn" data-amt="1">1%</button>
+      <button class="seg-btn" data-amt="10">10%</button>
+      <button class="seg-btn" data-amt="50">50%</button>
+      <button class="seg-btn selected" data-amt="100">Max</button>
+    </div>
+  </div>
 
   <div class="upgrade-section">
     <div class="upgrade-section-row">
@@ -2219,9 +2243,53 @@ const upgCostBuy = document.getElementById('upg-cost-buy');
 const upgCostBuyText = document.getElementById('upg-cost-buy-text');
 let upgradePopoverContext = null; // { type: 'gen'|'sparks'|'coins', idx? }
 
-function setBuyText(el, label, cost) {
+function setBuyText(el, label, cost, count) {
   const isOne = (cost && cost.eq) ? cost.eq(1) : cost === 1;
-  el.textContent = label + ' — ' + fmt(cost) + ' coin' + (isOne ? '' : 's');
+  let text = label;
+  if (count != null && count.gt(1)) text += ' ×' + fmtInt(count);
+  text += ' — ' + fmt(cost) + ' coin' + (isOne ? '' : 's');
+  el.textContent = text;
+}
+
+let upgradeBuyAmountPct = parseInt(localStorage.getItem('cascade-upgrade-buy-amount') || '100', 10);
+if (!VALID_AMOUNTS.includes(upgradeBuyAmountPct)) upgradeBuyAmountPct = 100;
+
+// Compute how many upgrade levels we can buy and the total cost.
+// Cost to buy N levels starting at level L: 2^L * (2^N - 1)
+// Max N where total <= coins: N = floor(log2(1 + coins / 2^L))
+function computeUpgradeBuyPlan(currentLevel, pct, maxLvl) {
+  const nextCost = Decimal.pow(2, currentLevel);
+  const coins = state.coins;
+  if (coins.lt(nextCost)) return { count: D0, cost: nextCost };
+
+  const ratio = coins.div(nextCost);
+  let maxN = ratio.add(1).log2().floor();
+  if (!maxN.isFinite() || maxN.lt(1)) maxN = D1;
+
+  if (maxLvl != null) {
+    const remaining = D(Math.max(0, maxLvl - currentLevel));
+    if (maxN.gt(remaining)) maxN = remaining;
+  }
+
+  let count = maxN;
+  if (pct != null && pct < 100) {
+    count = count.mul(pct).div(100).floor();
+    if (count.lt(1) && maxN.gte(1)) count = D1;
+  }
+
+  if (count.lte(0)) return { count: D0, cost: nextCost };
+
+  const totalCost = nextCost.mul(Decimal.pow(2, count).sub(1));
+  return { count, cost: totalCost };
+}
+
+function applyUpgradeBuyPlan(id, plan) {
+  if (plan.count.lte(0)) return false;
+  if (state.coins.lt(plan.cost)) return false;
+  state.coins = state.coins.sub(plan.cost);
+  // count is bounded by log2(coins) — fits in JS Number for any realistic coins value
+  setUpgradeLevel(id, getUpgradeLevel(id) + plan.count.toNumber());
+  return true;
 }
 
 function refreshUpgradePopover() {
@@ -2234,10 +2302,10 @@ function refreshUpgradePopover() {
 
     const pLvl = genUpgradeLevel(ctx.idx);
     const pMult = Decimal.pow(2, pLvl);
-    const pCost = genUpgradeNextCost(ctx.idx);
-    upgProdState.textContent = 'Lv ' + pLvl + ' · ' + fmt(pMult) + 'x';
-    setBuyText(upgProdBuyText, 'Upgrade', pCost);
-    upgProdBuy.disabled = !canAffordCoins(pCost);
+    upgProdState.textContent = 'Lv ' + fmtInt(pLvl) + ' · ' + fmt(pMult) + 'x';
+    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
+    setBuyText(upgProdBuyText, 'Upgrade', pPlan.cost, pPlan.count);
+    upgProdBuy.disabled = pPlan.count.lte(0);
 
     upgCostSection.removeAttribute('hidden');
     const cLvl = genCostLevel(ctx.idx);
@@ -2249,7 +2317,7 @@ function refreshUpgradePopover() {
     else if (cPctDec.gte(1)) cPctText = Math.round(cPctDec.toNumber()) + '%';
     else if (cPctDec.gte(0.01)) cPctText = cPctDec.toNumber().toFixed(2) + '%';
     else cPctText = '<0.01%';
-    upgCostState.textContent = 'Lv ' + cLvl + ' · ' + cPctText + ' cost';
+    upgCostState.textContent = 'Lv ' + fmtInt(cLvl) + ' · ' + cPctText + ' cost';
     if (cMaxLvl === 0) {
       upgCostBuyText.textContent = 'Not available';
       upgCostBuy.disabled = true;
@@ -2257,27 +2325,27 @@ function refreshUpgradePopover() {
       upgCostBuyText.textContent = 'MAX';
       upgCostBuy.disabled = true;
     } else {
-      const cCost = genCostNextCost(ctx.idx);
-      setBuyText(upgCostBuyText, 'Upgrade', cCost);
-      upgCostBuy.disabled = !canAffordCoins(cCost);
+      const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl);
+      setBuyText(upgCostBuyText, 'Upgrade', cPlan.cost, cPlan.count);
+      upgCostBuy.disabled = cPlan.count.lte(0);
     }
   } else if (ctx.type === 'sparks') {
     upgTitle.textContent = 'Sparks';
     upgProdName.textContent = 'Production rate';
     const lvl = sparksUpgradeLevel();
-    const cost = sparksUpgradeNextCost();
-    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(Decimal.pow(2, lvl).mul(SPARK_RATE)) + '/s';
-    setBuyText(upgProdBuyText, 'Upgrade', cost);
-    upgProdBuy.disabled = !canAffordCoins(cost);
+    upgProdState.textContent = 'Lv ' + fmtInt(lvl) + ' · ' + fmt(Decimal.pow(2, lvl).mul(SPARK_RATE)) + '/s';
+    const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
+    setBuyText(upgProdBuyText, 'Upgrade', plan.cost, plan.count);
+    upgProdBuy.disabled = plan.count.lte(0);
     upgCostSection.setAttribute('hidden', '');
   } else if (ctx.type === 'coins') {
     upgTitle.textContent = 'Coins';
     upgProdName.textContent = 'Reward per milestone';
     const lvl = coinsUpgradeLevel();
-    const cost = coinsUpgradeNextCost();
-    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(Decimal.pow(2, lvl)) + ' / milestone';
-    setBuyText(upgProdBuyText, 'Upgrade', cost);
-    upgProdBuy.disabled = !canAffordCoins(cost);
+    upgProdState.textContent = 'Lv ' + fmtInt(lvl) + ' · ' + fmt(Decimal.pow(2, lvl)) + ' / milestone';
+    const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
+    setBuyText(upgProdBuyText, 'Upgrade', plan.cost, plan.count);
+    upgProdBuy.disabled = plan.count.lte(0);
     upgCostSection.setAttribute('hidden', '');
   }
 }
@@ -2344,20 +2412,49 @@ function attachHoldBuy(btn, buyFn) {
 attachHoldBuy(upgProdBuy, () => {
   const ctx = upgradePopoverContext;
   if (!ctx) return false;
-  if (ctx.type === 'gen') return buyGenUpgrade(ctx.idx);
-  if (ctx.type === 'sparks') return buySparksUpgrade();
-  if (ctx.type === 'coins') return buyCoinsUpgrade();
+  if (ctx.type === 'gen') {
+    const plan = computeUpgradeBuyPlan(genUpgradeLevel(ctx.idx), upgradeBuyAmountPct, null);
+    return applyUpgradeBuyPlan(genUpgradeKey(ctx.idx), plan);
+  }
+  if (ctx.type === 'sparks') {
+    const plan = computeUpgradeBuyPlan(sparksUpgradeLevel(), upgradeBuyAmountPct, null);
+    return applyUpgradeBuyPlan('sparks', plan);
+  }
+  if (ctx.type === 'coins') {
+    const plan = computeUpgradeBuyPlan(coinsUpgradeLevel(), upgradeBuyAmountPct, null);
+    return applyUpgradeBuyPlan('coins', plan);
+  }
   return false;
 });
 attachHoldBuy(upgCostBuy, () => {
   const ctx = upgradePopoverContext;
   if (!ctx || ctx.type !== 'gen') return false;
-  return buyGenCostUpgrade(ctx.idx);
+  const cMaxLvl = genCostMaxLevel(ctx.idx);
+  if (cMaxLvl === 0) return false;
+  const plan = computeUpgradeBuyPlan(genCostLevel(ctx.idx), upgradeBuyAmountPct, cMaxLvl);
+  return applyUpgradeBuyPlan(genCostKey(ctx.idx), plan);
 });
 document.addEventListener('click', (e) => {
   if (!upgradePopoverContext) return;
   if (!upgradePopover.contains(e.target)) closeUpgradePopover();
 });
+
+const upgSegmentEl = document.getElementById('upg-amount-segment');
+function updateUpgSegmentUI() {
+  upgSegmentEl.querySelectorAll('.seg-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.amt, 10) === upgradeBuyAmountPct);
+  });
+}
+upgSegmentEl.querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    upgradeBuyAmountPct = parseInt(btn.dataset.amt, 10);
+    localStorage.setItem('cascade-upgrade-buy-amount', String(upgradeBuyAmountPct));
+    updateUpgSegmentUI();
+    refreshUpgradePopover();
+  });
+});
+updateUpgSegmentUI();
 
 // Click handlers for the resource pills
 document.getElementById('sparks-upgrade-pill').addEventListener('click', (e) => {
