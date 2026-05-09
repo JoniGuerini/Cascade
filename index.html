@@ -503,9 +503,10 @@ html.dark .hero-btn:hover {
 .upgrade-popover {
   position: fixed;
   z-index: 200;
-  min-width: 260px;
+  min-width: 320px;
+  max-width: 360px;
   background: var(--bg-card);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 18px;
   box-shadow: var(--shadow-modal);
   display: flex;
@@ -541,39 +542,74 @@ html.dark .hero-btn:hover {
 }
 .upgrade-section {
   background: var(--bg-soft);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px;
   box-shadow: var(--shadow-pill);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .upgrade-section[hidden] { display: none; }
-.upgrade-section-row {
+.upgrade-section-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.upgrade-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.upgrade-stat {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: var(--shadow-pill);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.upgrade-stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.upgrade-stat-value {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-modal.accent.upgrade-buy {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
-.upgrade-section-name {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.upgrade-buy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
-.upgrade-section-state {
+.upgrade-buy-cost {
   font-family: 'Geist Mono', monospace;
   font-feature-settings: 'tnum';
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent);
-}
-.btn-modal.accent.upgrade-buy {
-  width: 100%;
-  padding: 8px 14px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  opacity: 0.92;
 }
 .gen-row.has-owned .tier-badge { color: var(--text-1); }
 .tier-badge.pulse { animation: badgePulse .5s ease; }
@@ -1319,22 +1355,38 @@ html.dark .btn-modal.danger {
   </div>
 
   <div class="upgrade-section">
-    <div class="upgrade-section-row">
-      <span class="upgrade-section-name" id="upg-prod-name">Production</span>
-      <span class="upgrade-section-state" id="upg-prod-state">Lv 0 · 1x</span>
+    <div class="upgrade-section-name" id="upg-prod-name">Production</div>
+    <div class="upgrade-stat-grid">
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label">Level</div>
+        <div class="upgrade-stat-value" id="upg-prod-level">0</div>
+      </div>
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label" id="upg-prod-metric-label">Multiplier</div>
+        <div class="upgrade-stat-value" id="upg-prod-metric">1x</div>
+      </div>
     </div>
     <button class="btn-modal accent upgrade-buy" id="upg-prod-buy">
-      <span id="upg-prod-buy-text">Upgrade — 1 coin</span>
+      <span class="upgrade-buy-label" id="upg-prod-buy-label">Upgrade</span>
+      <span class="upgrade-buy-cost" id="upg-prod-buy-cost">1 coin</span>
     </button>
   </div>
 
   <div class="upgrade-section" id="upg-cost-section">
-    <div class="upgrade-section-row">
-      <span class="upgrade-section-name">Cost reduction</span>
-      <span class="upgrade-section-state" id="upg-cost-state">Lv 0 · 100%</span>
+    <div class="upgrade-section-name">Cost reduction</div>
+    <div class="upgrade-stat-grid">
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label">Level</div>
+        <div class="upgrade-stat-value" id="upg-cost-level">0</div>
+      </div>
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label">Cost factor</div>
+        <div class="upgrade-stat-value" id="upg-cost-metric">100%</div>
+      </div>
     </div>
     <button class="btn-modal accent upgrade-buy" id="upg-cost-buy">
-      <span id="upg-cost-buy-text">Upgrade — 1 coin</span>
+      <span class="upgrade-buy-label" id="upg-cost-buy-label">Upgrade</span>
+      <span class="upgrade-buy-cost" id="upg-cost-buy-cost">1 coin</span>
     </button>
   </div>
 </div>
@@ -2234,21 +2286,30 @@ applyFreeMode();
 const upgradePopover = document.getElementById('upgrade-popover');
 const upgTitle = document.getElementById('upg-title');
 const upgProdName = document.getElementById('upg-prod-name');
-const upgProdState = document.getElementById('upg-prod-state');
+const upgProdLevel = document.getElementById('upg-prod-level');
+const upgProdMetric = document.getElementById('upg-prod-metric');
+const upgProdMetricLabel = document.getElementById('upg-prod-metric-label');
 const upgProdBuy = document.getElementById('upg-prod-buy');
-const upgProdBuyText = document.getElementById('upg-prod-buy-text');
+const upgProdBuyLabel = document.getElementById('upg-prod-buy-label');
+const upgProdBuyCost = document.getElementById('upg-prod-buy-cost');
 const upgCostSection = document.getElementById('upg-cost-section');
-const upgCostState = document.getElementById('upg-cost-state');
+const upgCostLevel = document.getElementById('upg-cost-level');
+const upgCostMetric = document.getElementById('upg-cost-metric');
 const upgCostBuy = document.getElementById('upg-cost-buy');
-const upgCostBuyText = document.getElementById('upg-cost-buy-text');
+const upgCostBuyLabel = document.getElementById('upg-cost-buy-label');
+const upgCostBuyCost = document.getElementById('upg-cost-buy-cost');
 let upgradePopoverContext = null; // { type: 'gen'|'sparks'|'coins', idx? }
 
-function setBuyText(el, label, cost, count) {
+function setBuyButton(labelEl, costEl, label, cost, count) {
   const isOne = (cost && cost.eq) ? cost.eq(1) : cost === 1;
-  let text = label;
-  if (count != null && count.gt(1)) text += ' ×' + fmtInt(count);
-  text += ' — ' + fmt(cost) + ' coin' + (isOne ? '' : 's');
-  el.textContent = text;
+  let labelText = label;
+  if (count != null && count.gt(1)) labelText += ' ×' + fmtInt(count);
+  labelEl.textContent = labelText;
+  costEl.textContent = fmt(cost) + ' coin' + (isOne ? '' : 's');
+}
+function setBuyButtonStatic(labelEl, costEl, text) {
+  labelEl.textContent = text;
+  costEl.textContent = '';
 }
 
 const UPG_VALID_AMOUNTS = [1, 10, 50, 100];
@@ -2300,12 +2361,14 @@ function refreshUpgradePopover() {
   if (ctx.type === 'gen') {
     upgTitle.textContent = 'Generator ' + fmtTier(ctx.idx + 1);
     upgProdName.textContent = 'Production';
+    upgProdMetricLabel.textContent = 'Multiplier';
 
     const pLvl = genUpgradeLevel(ctx.idx);
     const pMult = Decimal.pow(2, pLvl);
-    upgProdState.textContent = 'Lv ' + fmtInt(pLvl) + ' · ' + fmt(pMult) + 'x';
+    upgProdLevel.textContent = fmtInt(pLvl);
+    upgProdMetric.textContent = fmt(pMult) + 'x';
     const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
-    setBuyText(upgProdBuyText, 'Upgrade', pPlan.cost, pPlan.count);
+    setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', pPlan.cost, pPlan.count);
     upgProdBuy.disabled = pPlan.count.lte(0);
 
     upgCostSection.removeAttribute('hidden');
@@ -2318,34 +2381,39 @@ function refreshUpgradePopover() {
     else if (cPctDec.gte(1)) cPctText = Math.round(cPctDec.toNumber()) + '%';
     else if (cPctDec.gte(0.01)) cPctText = cPctDec.toNumber().toFixed(2) + '%';
     else cPctText = '<0.01%';
-    upgCostState.textContent = 'Lv ' + fmtInt(cLvl) + ' · ' + cPctText + ' cost';
+    upgCostLevel.textContent = fmtInt(cLvl);
+    upgCostMetric.textContent = cPctText;
     if (cMaxLvl === 0) {
-      upgCostBuyText.textContent = 'Not available';
+      setBuyButtonStatic(upgCostBuyLabel, upgCostBuyCost, 'Not available');
       upgCostBuy.disabled = true;
     } else if (cLvl >= cMaxLvl) {
-      upgCostBuyText.textContent = 'MAX';
+      setBuyButtonStatic(upgCostBuyLabel, upgCostBuyCost, 'MAX');
       upgCostBuy.disabled = true;
     } else {
       const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl);
-      setBuyText(upgCostBuyText, 'Upgrade', cPlan.cost, cPlan.count);
+      setBuyButton(upgCostBuyLabel, upgCostBuyCost, 'Upgrade', cPlan.cost, cPlan.count);
       upgCostBuy.disabled = cPlan.count.lte(0);
     }
   } else if (ctx.type === 'sparks') {
     upgTitle.textContent = 'Sparks';
     upgProdName.textContent = 'Production rate';
+    upgProdMetricLabel.textContent = 'Per second';
     const lvl = sparksUpgradeLevel();
-    upgProdState.textContent = 'Lv ' + fmtInt(lvl) + ' · ' + fmt(Decimal.pow(2, lvl).mul(SPARK_RATE)) + '/s';
+    upgProdLevel.textContent = fmtInt(lvl);
+    upgProdMetric.textContent = fmt(Decimal.pow(2, lvl).mul(SPARK_RATE));
     const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
-    setBuyText(upgProdBuyText, 'Upgrade', plan.cost, plan.count);
+    setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', plan.cost, plan.count);
     upgProdBuy.disabled = plan.count.lte(0);
     upgCostSection.setAttribute('hidden', '');
   } else if (ctx.type === 'coins') {
     upgTitle.textContent = 'Coins';
     upgProdName.textContent = 'Reward per milestone';
+    upgProdMetricLabel.textContent = 'Per milestone';
     const lvl = coinsUpgradeLevel();
-    upgProdState.textContent = 'Lv ' + fmtInt(lvl) + ' · ' + fmt(Decimal.pow(2, lvl)) + ' / milestone';
+    upgProdLevel.textContent = fmtInt(lvl);
+    upgProdMetric.textContent = fmt(Decimal.pow(2, lvl));
     const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
-    setBuyText(upgProdBuyText, 'Upgrade', plan.cost, plan.count);
+    setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', plan.cost, plan.count);
     upgProdBuy.disabled = plan.count.lte(0);
     upgCostSection.setAttribute('hidden', '');
   }
