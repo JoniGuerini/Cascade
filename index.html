@@ -1884,7 +1884,7 @@ function render() {
     r.row.classList.toggle('is-next', !isBought);
 
     const lvl = genTotalUpgradeLevel(idx);
-    const lvlText = '+' + lvl;
+    const lvlText = '+' + fmtInt(lvl);
     if (r.upgradeBadge.textContent !== lvlText) r.upgradeBadge.textContent = lvlText;
     r.upgradeBadge.classList.toggle('has-level', lvl > 0);
 
