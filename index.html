@@ -1581,14 +1581,23 @@ function fmt(n) {
     return Math.floor(v).toString();
   }
   const log = n.log10();
-  const tierD = log.div(3).floor();
+  let tierD = log.div(3).floor();
+  // Mantissa via Decimal division — exact for any magnitude break_eternity supports.
+  let mantissa = n.div(Decimal.pow(10, tierD.mul(3))).toNumber();
+  if (!isFinite(mantissa)) return n.toString();
+  // Float-rounding correction: when log10 precision drift makes tier off by one,
+  // mantissa lands at exactly 1000 (or close enough that toFixed(2) rounds to "1000.00").
+  // Bump the tier and renormalize so the suffix advances instead of showing 1000.
+  if (mantissa >= 999.995) {
+    mantissa /= 1000;
+    tierD = tierD.add(1);
+  }
   const tier = tierD.toNumber();
   if (!isFinite(tier) || tier > 1e6) {
     // tetration territory — fallback to library's own format
     return n.toString();
   }
   const suffix = tier < SUFFIXES.length ? SUFFIXES[tier] : letterSuffix(tier - SUFFIXES.length);
-  const mantissa = n.div(Decimal.pow(10, tier * 3)).toNumber();
   const numStr = mantissa.toFixed(2);
   return suffix ? numStr + ' ' + suffix : numStr;
 }
