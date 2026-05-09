@@ -2304,21 +2304,44 @@ function closeUpgradePopover() {
   upgradePopoverContext = null;
   upgradePopover.setAttribute('hidden', '');
 }
-upgProdBuy.addEventListener('click', (e) => {
-  e.stopPropagation();
+function attachHoldBuy(btn, buyFn) {
+  let timer = null;
+  let delay = 200;
+  function tick() {
+    if (btn.disabled || !buyFn()) { stop(); return; }
+    refreshUpgradePopover();
+    delay = Math.max(30, delay * 0.85);
+    timer = setTimeout(tick, delay);
+  }
+  function stop() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    delay = 200;
+  }
+  btn.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || btn.disabled) return;
+    e.stopPropagation();
+    if (!buyFn()) return;
+    refreshUpgradePopover();
+    try { btn.setPointerCapture(e.pointerId); } catch(_) {}
+    delay = 200;
+    timer = setTimeout(tick, 400);
+  });
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointercancel', stop);
+}
+
+attachHoldBuy(upgProdBuy, () => {
   const ctx = upgradePopoverContext;
-  if (!ctx) return;
-  let ok = false;
-  if (ctx.type === 'gen') ok = buyGenUpgrade(ctx.idx);
-  else if (ctx.type === 'sparks') ok = buySparksUpgrade();
-  else if (ctx.type === 'coins') ok = buyCoinsUpgrade();
-  if (ok) refreshUpgradePopover();
+  if (!ctx) return false;
+  if (ctx.type === 'gen') return buyGenUpgrade(ctx.idx);
+  if (ctx.type === 'sparks') return buySparksUpgrade();
+  if (ctx.type === 'coins') return buyCoinsUpgrade();
+  return false;
 });
-upgCostBuy.addEventListener('click', (e) => {
-  e.stopPropagation();
+attachHoldBuy(upgCostBuy, () => {
   const ctx = upgradePopoverContext;
-  if (!ctx || ctx.type !== 'gen') return;
-  if (buyGenCostUpgrade(ctx.idx)) refreshUpgradePopover();
+  if (!ctx || ctx.type !== 'gen') return false;
+  return buyGenCostUpgrade(ctx.idx);
 });
 document.addEventListener('click', (e) => {
   if (!upgradePopoverContext) return;
