@@ -2583,15 +2583,19 @@ function tryAutoBuy(dt) {
   autoBuyAccum += dt;
   if (autoBuyAccum < 0.1) return;
   autoBuyAccum = 0;
-  // Scan from highest unlocked tier down — buy at the most expensive tier you can afford
-  const maxIdx = state.bought.length - 1;
-  for (let i = maxIdx; i >= 0; i--) {
-    if (canAffordOne(i)) { buy(i, 'max'); return; }
+  // Target the next generator that hasn't been unlocked yet (bought count == 0).
+  // If all current tiers are unlocked, ensure the next one and try that.
+  let targetIdx = -1;
+  for (let i = 0; i < state.bought.length; i++) {
+    if (state.bought[i].lte(0)) { targetIdx = i; break; }
   }
-  // If no existing tier is affordable, try unlocking the next one
-  const nextIdx = maxIdx + 1;
-  ensureTier(nextIdx);
-  if (canAffordOne(nextIdx)) buy(nextIdx, 'max');
+  if (targetIdx === -1) {
+    targetIdx = state.bought.length;
+    ensureTier(targetIdx);
+  }
+  // Only buy if we can afford the next one. Otherwise wait — never fall back
+  // to buying tiers we've already unlocked.
+  if (canAffordOne(targetIdx)) buy(targetIdx, 'max');
 }
 
 render();
