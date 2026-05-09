@@ -1786,11 +1786,11 @@ function render() {
   document.getElementById('coins').textContent = fmt(state.coins);
   const sparksLvl = sparksUpgradeLevel();
   const sparksPill = document.getElementById('sparks-upgrade-pill');
-  sparksPill.textContent = '+' + sparksLvl;
+  sparksPill.textContent = '+' + fmtInt(sparksLvl);
   sparksPill.classList.toggle('has-level', sparksLvl > 0);
   const coinsLvl = coinsUpgradeLevel();
   const coinsPill = document.getElementById('coins-upgrade-pill');
-  coinsPill.textContent = '+' + coinsLvl;
+  coinsPill.textContent = '+' + fmtInt(coinsLvl);
   coinsPill.classList.toggle('has-level', coinsLvl > 0);
   const maxTier = state.bought.filter(b => b.gt(0)).length;
   const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
