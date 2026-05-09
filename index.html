@@ -1405,7 +1405,7 @@ let state = {
   coins: D0,
   gens: [D0],
   bought: [D0],
-  milestonesClaimed: [0],
+  milestonesClaimed: [D0],
   upgrades: {},
   startTime: Date.now(),
   lastSave: Date.now(),
@@ -1422,12 +1422,14 @@ if (saved) {
       state.coins = safeFinite(parsed.coins != null ? D(parsed.coins) : D0, D0);
       state.gens = parsed.gens.map(g => safeFinite(D(g), D0));
       state.bought = parsed.bought.map(b => safeFinite(D(b), D0));
-      state.milestonesClaimed = Array.isArray(parsed.milestonesClaimed) ? parsed.milestonesClaimed.slice() : [];
+      state.milestonesClaimed = Array.isArray(parsed.milestonesClaimed)
+        ? parsed.milestonesClaimed.map(m => safeFinite(D(m), D0))
+        : [];
       state.upgrades = (parsed.upgrades && typeof parsed.upgrades === 'object') ? parsed.upgrades : {};
       pendingScrollTop = typeof parsed.scrollTop === 'number' ? parsed.scrollTop : 0;
       while (state.gens.length < state.bought.length) state.gens.push(D0);
       while (state.bought.length < state.gens.length) state.bought.push(D0);
-      while (state.milestonesClaimed.length < state.gens.length) state.milestonesClaimed.push(0);
+      while (state.milestonesClaimed.length < state.gens.length) state.milestonesClaimed.push(D0);
       state.startTime = parsed.startTime || Date.now();
       state.lastSave = parsed.lastSave || Date.now();
       const offlineMs = Math.max(0, Date.now() - state.lastSave);
@@ -1440,7 +1442,7 @@ function ensureTier(idx) {
   while (state.gens.length <= idx) {
     state.gens.push(D0);
     state.bought.push(D0);
-    state.milestonesClaimed.push(0);
+    state.milestonesClaimed.push(D0);
   }
 }
 
@@ -1636,12 +1638,12 @@ function checkMilestones() {
   for (let i = 0; i < state.gens.length; i++) {
     const gen = state.gens[i];
     if (!gen || gen.lt(10) || !gen.isFinite()) continue;
-    const logVal = gen.log10().toNumber();
-    if (!isFinite(logVal)) continue;
-    const claimedNow = Math.floor(logVal);
-    const claimed = state.milestonesClaimed[i] || 0;
-    if (claimedNow > claimed) {
-      state.coins = state.coins.add(coinsUpgradeMult().mul(claimedNow - claimed));
+    const claimedNow = gen.log10().floor();
+    if (!claimedNow.isFinite()) continue;
+    const claimed = state.milestonesClaimed[i] || D0;
+    if (claimedNow.gt(claimed)) {
+      const diff = claimedNow.sub(claimed);
+      state.coins = state.coins.add(coinsUpgradeMult().mul(diff));
       state.milestonesClaimed[i] = claimedNow;
     }
   }
@@ -2014,7 +2016,7 @@ function save() {
       coins: state.coins.toString(),
       gens: state.gens.map(g => g.toString()),
       bought: state.bought.map(b => b.toString()),
-      milestonesClaimed: state.milestonesClaimed,
+      milestonesClaimed: state.milestonesClaimed.map(m => m.toString()),
       upgrades: state.upgrades,
       scrollTop: scrollEl ? scrollEl.scrollTop : 0,
       startTime: state.startTime,
