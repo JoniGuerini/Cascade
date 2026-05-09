@@ -665,9 +665,33 @@ html.dark .hero-btn:hover {
 .cost-energy { color: var(--text-1); }
 .cost-energy.muted { color: var(--text-3); }
 .cost-energy.lacking { color: var(--neg); }
-.cost-prev { color: var(--text-2); }
+.cost-prev {
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .cost-prev.muted { color: var(--text-3); }
 .cost-prev.lacking { color: var(--neg); }
+.cost-prev-tier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--btn-bg);
+  box-shadow: var(--shadow-pill);
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  box-sizing: border-box;
+}
+.cost-prev.lacking .cost-prev-tier { color: var(--neg); }
 .cost-sparks { color: var(--text-2); }
 .cost-sparks.lacking { color: var(--neg); }
 .cost-icon {
@@ -1792,7 +1816,7 @@ function addRow(idx) {
         </svg>
         <span class="cost-val"></span>
       </span>
-      <span class="cost-prev"></span>
+      <span class="cost-prev"><span class="cost-prev-val"></span><span class="cost-prev-tier"></span></span>
       <span class="cost-sparks">
         <svg class="cost-icon" viewBox="0 0 16 16" fill="currentColor" shape-rendering="geometricPrecision" aria-hidden="true">
           <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z"/>
@@ -1844,6 +1868,8 @@ function addRow(idx) {
     costEnergy: row.querySelector('.cost-energy'),
     costEnergyVal: row.querySelector('.cost-energy .cost-val'),
     costPrev: row.querySelector('.cost-prev'),
+    costPrevVal: row.querySelector('.cost-prev-val'),
+    costPrevTier: row.querySelector('.cost-prev-tier'),
     costSparks: row.querySelector('.cost-sparks'),
     upgradeBadge: row.querySelector('.upgrade-pill'),
     buy1: row.querySelector('.b1'),
@@ -1977,7 +2003,13 @@ function render() {
     r.costEnergyVal.textContent = fmt(cost);
     r.costEnergy.classList.toggle('lacking', !hasEnergy);
     const showPrev = idx > 0 && prevCost.gt(0);
-    r.costPrev.textContent = showPrev ? fmt(prevCost) + ' G' + idx : '';
+    if (showPrev) {
+      r.costPrevVal.textContent = fmt(prevCost);
+      r.costPrevTier.textContent = fmtTier(idx);
+    } else {
+      r.costPrevVal.textContent = '';
+      r.costPrevTier.textContent = '';
+    }
     r.costPrev.style.display = showPrev ? '' : 'none';
     r.costPrev.classList.toggle('lacking', showPrev && !hasPrev);
     r.costSparks.classList.toggle('lacking', !hasSparks);
