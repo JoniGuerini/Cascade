@@ -323,6 +323,14 @@ html.dark .hero-btn:hover {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.res-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .resource-head {
   display: flex;
@@ -592,29 +600,29 @@ html.dark .hero-btn:hover {
 .cost-energy { grid-column: 1; }
 .cost-prev { grid-column: 2; }
 .cost-sparks { grid-column: 3; }
-.cost-energy, .cost-prev {
+.cost-energy, .cost-prev, .cost-sparks {
   font-weight: 500;
   font-size: 13px;
+  white-space: nowrap;
+}
+.cost-energy, .cost-sparks {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .cost-energy { color: var(--text-1); }
 .cost-energy.muted { color: var(--text-3); }
 .cost-energy.lacking { color: var(--neg); }
-.cost-prev { color: var(--text-2); white-space: nowrap; }
+.cost-prev { color: var(--text-2); }
 .cost-prev.muted { color: var(--text-3); }
 .cost-prev.lacking { color: var(--neg); }
-.cost-sparks {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: 'Geist Mono', monospace;
-  font-feature-settings: 'tnum';
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--text-2);
-  white-space: nowrap;
-}
-.cost-sparks .ti { font-size: 13px; }
+.cost-sparks { color: var(--text-2); }
 .cost-sparks.lacking { color: var(--neg); }
+.cost-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
 
 .buy-btn {
   padding: 8px 0;
@@ -1206,13 +1214,23 @@ html.dark .btn-modal.danger {
 
   <div class="card resources-card fade-in" style="animation-delay:.04s">
     <div class="resource">
-      <h1>Energy</h1>
+      <h1>
+        <svg class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" shape-rendering="geometricPrecision">
+          <path d="M10 1 L3 9 L7 9 L6 15 L13 7 L9 7 Z"/>
+        </svg>
+        Energy
+      </h1>
       <p class="big" id="energy">1</p>
       <p class="rate"><span class="num" id="rate">+0</span> per second</p>
     </div>
     <div class="resource">
       <div class="resource-head">
-        <h1>Sparks</h1>
+        <h1>
+          <svg class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" shape-rendering="geometricPrecision">
+            <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z"/>
+          </svg>
+          Sparks
+        </h1>
         <button type="button" class="upgrade-pill" id="sparks-upgrade-pill" title="Upgrade sparks production">+0</button>
       </div>
       <p class="big" id="sparks">1</p>
@@ -1220,7 +1238,12 @@ html.dark .btn-modal.danger {
     </div>
     <div class="resource">
       <div class="resource-head">
-        <h1>Coins</h1>
+        <h1>
+          <svg class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" shape-rendering="geometricPrecision">
+            <circle cx="8" cy="8" r="6"/>
+          </svg>
+          Coins
+        </h1>
         <button type="button" class="upgrade-pill" id="coins-upgrade-pill" title="Upgrade coins per milestone">+0</button>
       </div>
       <p class="big" id="coins">0</p>
@@ -1678,9 +1701,19 @@ function addRow(idx) {
     <div class="gen-num owned"></div>
     <div class="gen-num rate dim"></div>
     <div class="cost-group">
-      <span class="cost-energy"></span>
+      <span class="cost-energy">
+        <svg class="cost-icon" viewBox="0 0 16 16" fill="currentColor" shape-rendering="geometricPrecision" aria-hidden="true">
+          <path d="M10 1 L3 9 L7 9 L6 15 L13 7 L9 7 Z"/>
+        </svg>
+        <span class="cost-val"></span>
+      </span>
       <span class="cost-prev"></span>
-      <span class="cost-sparks"><i class="ti ti-sparkles"></i>1</span>
+      <span class="cost-sparks">
+        <svg class="cost-icon" viewBox="0 0 16 16" fill="currentColor" shape-rendering="geometricPrecision" aria-hidden="true">
+          <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z"/>
+        </svg>
+        <span class="cost-val">1</span>
+      </span>
     </div>
     <div><button type="button" class="buy-btn b1">Buy 1</button></div>
     <div><button type="button" class="buy-btn bmax">Max</button></div>
@@ -1724,6 +1757,7 @@ function addRow(idx) {
     owned: row.querySelector('.owned'),
     rate: row.querySelector('.rate'),
     costEnergy: row.querySelector('.cost-energy'),
+    costEnergyVal: row.querySelector('.cost-energy .cost-val'),
     costPrev: row.querySelector('.cost-prev'),
     costSparks: row.querySelector('.cost-sparks'),
     upgradeBadge: row.querySelector('.upgrade-pill'),
@@ -1855,7 +1889,7 @@ function render() {
     r.rate.textContent = owned.gt(0.01) ? '+' + fmt(tierRate) + '/s' : '—';
     r.rate.classList.toggle('muted', owned.lte(0.01));
 
-    r.costEnergy.textContent = fmt(cost);
+    r.costEnergyVal.textContent = fmt(cost);
     r.costEnergy.classList.toggle('lacking', !hasEnergy);
     const showPrev = idx > 0 && prevCost.gt(0);
     r.costPrev.textContent = showPrev ? fmt(prevCost) + ' G' + idx : '';
