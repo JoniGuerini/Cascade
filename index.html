@@ -1548,11 +1548,11 @@ function simulate(dt) {
   const factor = PROD_RATE * dt;
   const n = state.gens.length;
   for (let i = n - 1; i > 0; i--) {
-    state.gens[i - 1] = state.gens[i - 1].add(state.gens[i].mul(factor * genUpgradeMult(i)));
+    state.gens[i - 1] = state.gens[i - 1].add(state.gens[i].mul(genUpgradeMult(i)).mul(factor));
   }
-  state.energy = state.energy.add(state.gens[0].mul(factor * genUpgradeMult(0)));
+  state.energy = state.energy.add(state.gens[0].mul(genUpgradeMult(0)).mul(factor));
   if (state.bought[0] && state.bought[0].gt(0)) {
-    state.sparks = state.sparks.add(SPARK_RATE * sparksUpgradeMult() * dt);
+    state.sparks = state.sparks.add(sparksUpgradeMult().mul(SPARK_RATE * dt));
   }
   checkMilestones();
 }
@@ -1590,8 +1590,8 @@ function buyUpgrade(id, cost) {
 // Per-generator upgrades (production + cost reduction)
 function genUpgradeKey(idx) { return 'gen-' + idx; }
 function genUpgradeLevel(idx) { return getUpgradeLevel(genUpgradeKey(idx)); }
-function genUpgradeMult(idx) { return Math.pow(2, genUpgradeLevel(idx)); }
-function genUpgradeNextCost(idx) { return Math.pow(2, genUpgradeLevel(idx)); }
+function genUpgradeMult(idx) { return Decimal.pow(2, genUpgradeLevel(idx)); }
+function genUpgradeNextCost(idx) { return Decimal.pow(2, genUpgradeLevel(idx)); }
 function buyGenUpgrade(idx) {
   return buyUpgrade(genUpgradeKey(idx), genUpgradeNextCost(idx));
 }
@@ -1618,14 +1618,14 @@ function genTotalUpgradeLevel(idx) { return genUpgradeLevel(idx) + genCostLevel(
 
 // Resource upgrades — Sparks (production rate) and Coins (per-milestone payout)
 function sparksUpgradeLevel() { return getUpgradeLevel('sparks'); }
-function sparksUpgradeMult() { return Math.pow(2, sparksUpgradeLevel()); }
-function sparksUpgradeNextCost() { return Math.pow(2, sparksUpgradeLevel()); }
+function sparksUpgradeMult() { return Decimal.pow(2, sparksUpgradeLevel()); }
+function sparksUpgradeNextCost() { return Decimal.pow(2, sparksUpgradeLevel()); }
 function buySparksUpgrade() {
   return buyUpgrade('sparks', sparksUpgradeNextCost());
 }
 function coinsUpgradeLevel() { return getUpgradeLevel('coins'); }
-function coinsUpgradeMult() { return Math.pow(2, coinsUpgradeLevel()); }
-function coinsUpgradeNextCost() { return Math.pow(2, coinsUpgradeLevel()); }
+function coinsUpgradeMult() { return Decimal.pow(2, coinsUpgradeLevel()); }
+function coinsUpgradeNextCost() { return Decimal.pow(2, coinsUpgradeLevel()); }
 function buyCoinsUpgrade() {
   return buyUpgrade('coins', coinsUpgradeNextCost());
 }
@@ -1639,7 +1639,7 @@ function checkMilestones() {
     const claimedNow = Math.floor(logVal);
     const claimed = state.milestonesClaimed[i] || 0;
     if (claimedNow > claimed) {
-      state.coins = state.coins.add((claimedNow - claimed) * coinsUpgradeMult());
+      state.coins = state.coins.add(coinsUpgradeMult().mul(claimedNow - claimed));
       state.milestonesClaimed[i] = claimedNow;
     }
   }
@@ -1777,10 +1777,10 @@ const maxTierEl = document.getElementById('max-tier-text');
 let lastBadgeWidth = '38px';
 function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
-  document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(PROD_RATE * genUpgradeMult(0)));
+  document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(genUpgradeMult(0)).mul(PROD_RATE));
   document.getElementById('sparks').textContent = fmt(state.sparks);
   const sparksFlowing = state.bought[0] && state.bought[0].gt(0);
-  document.getElementById('spark-rate').textContent = sparksFlowing ? '+' + fmt(SPARK_RATE * sparksUpgradeMult()) : '+0';
+  document.getElementById('spark-rate').textContent = sparksFlowing ? '+' + fmt(sparksUpgradeMult().mul(SPARK_RATE)) : '+0';
   document.getElementById('coins').textContent = fmt(state.coins);
   const sparksLvl = sparksUpgradeLevel();
   const sparksPill = document.getElementById('sparks-upgrade-pill');
@@ -1876,7 +1876,7 @@ function render() {
     const max = maxAffordable(idx, buyAmountPct);
     const owned = state.gens[idx] || D0;
     const isBought = (state.bought[idx] || D0).gt(0);
-    const tierRate = owned.mul(PROD_RATE * genUpgradeMult(idx));
+    const tierRate = owned.mul(genUpgradeMult(idx)).mul(PROD_RATE);
 
     r.row.classList.toggle('has-owned', isBought);
     r.row.classList.toggle('is-next', !isBought);
@@ -2216,7 +2216,8 @@ const upgCostBuyText = document.getElementById('upg-cost-buy-text');
 let upgradePopoverContext = null; // { type: 'gen'|'sparks'|'coins', idx? }
 
 function setBuyText(el, label, cost) {
-  el.textContent = label + ' — ' + fmt(cost) + ' coin' + (cost === 1 ? '' : 's');
+  const isOne = (cost && cost.eq) ? cost.eq(1) : cost === 1;
+  el.textContent = label + ' — ' + fmt(cost) + ' coin' + (isOne ? '' : 's');
 }
 
 function refreshUpgradePopover() {
@@ -2228,7 +2229,7 @@ function refreshUpgradePopover() {
     upgProdName.textContent = 'Production';
 
     const pLvl = genUpgradeLevel(ctx.idx);
-    const pMult = Math.pow(2, pLvl);
+    const pMult = Decimal.pow(2, pLvl);
     const pCost = genUpgradeNextCost(ctx.idx);
     upgProdState.textContent = 'Lv ' + pLvl + ' · ' + fmt(pMult) + 'x';
     setBuyText(upgProdBuyText, 'Upgrade', pCost);
@@ -2255,7 +2256,7 @@ function refreshUpgradePopover() {
     upgProdName.textContent = 'Production rate';
     const lvl = sparksUpgradeLevel();
     const cost = sparksUpgradeNextCost();
-    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(SPARK_RATE * Math.pow(2, lvl)) + '/s';
+    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(Decimal.pow(2, lvl).mul(SPARK_RATE)) + '/s';
     setBuyText(upgProdBuyText, 'Upgrade', cost);
     upgProdBuy.disabled = !canAffordCoins(cost);
     upgCostSection.setAttribute('hidden', '');
@@ -2264,7 +2265,7 @@ function refreshUpgradePopover() {
     upgProdName.textContent = 'Reward per milestone';
     const lvl = coinsUpgradeLevel();
     const cost = coinsUpgradeNextCost();
-    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(Math.pow(2, lvl)) + ' / milestone';
+    upgProdState.textContent = 'Lv ' + lvl + ' · ' + fmt(Decimal.pow(2, lvl)) + ' / milestone';
     setBuyText(upgProdBuyText, 'Upgrade', cost);
     upgProdBuy.disabled = !canAffordCoins(cost);
     upgCostSection.setAttribute('hidden', '');
