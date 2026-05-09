@@ -2251,8 +2251,9 @@ function setBuyText(el, label, cost, count) {
   el.textContent = text;
 }
 
+const UPG_VALID_AMOUNTS = [1, 10, 50, 100];
 let upgradeBuyAmountPct = parseInt(localStorage.getItem('cascade-upgrade-buy-amount') || '100', 10);
-if (!VALID_AMOUNTS.includes(upgradeBuyAmountPct)) upgradeBuyAmountPct = 100;
+if (!UPG_VALID_AMOUNTS.includes(upgradeBuyAmountPct)) upgradeBuyAmountPct = 100;
 
 // Compute how many upgrade levels we can buy and the total cost.
 // Cost to buy N levels starting at level L: 2^L * (2^N - 1)
