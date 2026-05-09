@@ -2118,6 +2118,7 @@ modalConfirm.addEventListener('click', () => {
   try {
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem('cascade-freemode-locked');
+    localStorage.removeItem('cascade-autobuy');
     localStorage.setItem('cascade-needs-setup', '1');
   } catch(e) {}
   location.reload();
