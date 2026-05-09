@@ -1416,11 +1416,12 @@ if (saved) {
   try {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed.gens) && Array.isArray(parsed.bought)) {
-      state.energy = parsed.energy != null ? D(parsed.energy) : D1;
-      state.sparks = parsed.sparks != null ? D(parsed.sparks) : D1;
-      state.coins = parsed.coins != null ? D(parsed.coins) : D0;
-      state.gens = parsed.gens.map(g => D(g));
-      state.bought = parsed.bought.map(b => D(b));
+      const safeFinite = (v, fallback) => (v && v.isFinite && v.isFinite()) ? v : fallback;
+      state.energy = safeFinite(parsed.energy != null ? D(parsed.energy) : D1, D1);
+      state.sparks = safeFinite(parsed.sparks != null ? D(parsed.sparks) : D1, D1);
+      state.coins = safeFinite(parsed.coins != null ? D(parsed.coins) : D0, D0);
+      state.gens = parsed.gens.map(g => safeFinite(D(g), D0));
+      state.bought = parsed.bought.map(b => safeFinite(D(b), D0));
       state.milestonesClaimed = Array.isArray(parsed.milestonesClaimed) ? parsed.milestonesClaimed.slice() : [];
       state.upgrades = (parsed.upgrades && typeof parsed.upgrades === 'object') ? parsed.upgrades : {};
       pendingScrollTop = typeof parsed.scrollTop === 'number' ? parsed.scrollTop : 0;
