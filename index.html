@@ -1503,7 +1503,7 @@ function costOf(idx) {
   const base = energyCostFor(idx);
   const lvl = genCostLevel(idx);
   if (lvl === 0) return base;
-  const reduced = base.mul(Math.pow(0.5, lvl));
+  const reduced = base.mul(Decimal.pow(0.5, lvl));
   return reduced.lt(1) ? D1 : reduced.floor();
 }
 function prevGenNeeded(idx) {
@@ -1512,7 +1512,7 @@ function prevGenNeeded(idx) {
   if (base.lte(0)) return base;
   const lvl = genCostLevel(idx);
   if (lvl === 0) return base;
-  const reduced = base.mul(Math.pow(0.5, lvl));
+  const reduced = base.mul(Decimal.pow(0.5, lvl));
   return reduced.lt(1) ? D1 : reduced.floor();
 }
 let freeMode = localStorage.getItem('cascade-freemode') === '1';
@@ -1600,13 +1600,14 @@ function buyGenUpgrade(idx) {
 // Cost reduction upgrade — halves both energy and prev gen costs each level, clamped to min 1
 function genCostKey(idx) { return 'gen-' + idx + '-cost'; }
 function genCostLevel(idx) { return getUpgradeLevel(genCostKey(idx)); }
-function genCostMult(idx) { return Math.pow(0.5, genCostLevel(idx)); }
-function genCostNextCost(idx) { return Math.pow(2, genCostLevel(idx)); }
+function genCostMult(idx) { return Decimal.pow(0.5, genCostLevel(idx)); }
+function genCostNextCost(idx) { return Decimal.pow(2, genCostLevel(idx)); }
 function genCostMaxLevel(idx) {
   if (idx === 0) return 0; // Gen 1 already at minimum (1 energy, no prev gen)
-  const baseE = Math.pow(10, idx);
-  const baseP = 5 * idx;
-  return Math.ceil(Math.max(Math.log2(baseE), Math.log2(baseP)));
+  // baseE = 10^idx, baseP = 5*idx — compute log2 directly to avoid overflow at high idx
+  const log2BaseE = idx * 3.321928094887362; // log2(10) ≈ 3.3219
+  const log2BaseP = Math.log2(5 * idx);
+  return Math.ceil(Math.max(log2BaseE, log2BaseP));
 }
 function genCostAtMax(idx) { return genCostLevel(idx) >= genCostMaxLevel(idx); }
 function buyGenCostUpgrade(idx) {
@@ -2239,8 +2240,14 @@ function refreshUpgradePopover() {
     upgCostSection.removeAttribute('hidden');
     const cLvl = genCostLevel(ctx.idx);
     const cMaxLvl = genCostMaxLevel(ctx.idx);
-    const cPct = Math.round(Math.pow(0.5, cLvl) * 100);
-    upgCostState.textContent = 'Lv ' + cLvl + ' · ' + cPct + '% cost';
+    const cMult = Decimal.pow(0.5, cLvl);
+    const cPctDec = cMult.mul(100);
+    let cPctText;
+    if (cLvl === 0) cPctText = '100%';
+    else if (cPctDec.gte(1)) cPctText = Math.round(cPctDec.toNumber()) + '%';
+    else if (cPctDec.gte(0.01)) cPctText = cPctDec.toNumber().toFixed(2) + '%';
+    else cPctText = '<0.01%';
+    upgCostState.textContent = 'Lv ' + cLvl + ' · ' + cPctText + ' cost';
     if (cMaxLvl === 0) {
       upgCostBuyText.textContent = 'Not available';
       upgCostBuy.disabled = true;
