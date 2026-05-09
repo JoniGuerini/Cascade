@@ -379,7 +379,7 @@ html.dark .hero-btn:hover {
 .col-headers {
   flex: none;
   display: grid;
-  grid-template-columns: var(--tier-badge-min, 38px) auto 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 12px 20px;
   font-size: 10.5px;
@@ -417,7 +417,7 @@ html.dark .hero-btn:hover {
 
 .gen-row {
   display: grid;
-  grid-template-columns: var(--tier-badge-min, 38px) auto 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 14px 20px;
   align-items: center;
@@ -1397,6 +1397,7 @@ function tierInfo(idx) {
 
 let isResetting = false;
 let isInSetup = localStorage.getItem('cascade-needs-setup') === '1';
+let pendingScrollTop = 0;
 
 let state = {
   energy: D1,
@@ -1422,6 +1423,7 @@ if (saved) {
       state.bought = parsed.bought.map(b => D(b));
       state.milestonesClaimed = Array.isArray(parsed.milestonesClaimed) ? parsed.milestonesClaimed.slice() : [];
       state.upgrades = (parsed.upgrades && typeof parsed.upgrades === 'object') ? parsed.upgrades : {};
+      pendingScrollTop = typeof parsed.scrollTop === 'number' ? parsed.scrollTop : 0;
       while (state.gens.length < state.bought.length) state.gens.push(D0);
       while (state.bought.length < state.gens.length) state.bought.push(D0);
       while (state.milestonesClaimed.length < state.gens.length) state.milestonesClaimed.push(0);
@@ -2012,6 +2014,7 @@ function save() {
       bought: state.bought.map(b => b.toString()),
       milestonesClaimed: state.milestonesClaimed,
       upgrades: state.upgrades,
+      scrollTop: scrollEl ? scrollEl.scrollTop : 0,
       startTime: state.startTime,
       lastSave: state.lastSave,
     };
@@ -2358,6 +2361,10 @@ segmentEl.querySelectorAll('.seg-btn').forEach(btn => {
 updateSegmentUI();
 
 render();
+if (pendingScrollTop > 0) {
+  scrollEl.scrollTop = pendingScrollTop;
+  pendingScrollTop = 0;
+}
 requestAnimationFrame(loop);
 </script>
 
