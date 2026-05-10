@@ -2665,35 +2665,33 @@ function tryFullAuto(dt) {
   if (fullAutoAccum < 0.1) return;
   fullAutoAccum = 0;
 
-  // 1. Sparks + coins upgrades — TOP priority. Try these first.
-  let boughtResource = false;
+  // 1. Sparks + coins upgrades — first dibs on coins each tick (priority order),
+  // but they don't BLOCK gen upgrades. Whatever coins they leave behind flow on.
   const sLvl = sparksUpgradeLevel();
   const sPlan = computeUpgradeBuyPlan(sLvl, upgradeBuyAmountPct, null);
-  if (sPlan.count.gt(0)) { applyUpgradeBuyPlan('sparks', sPlan); boughtResource = true; }
+  if (sPlan.count.gt(0)) applyUpgradeBuyPlan('sparks', sPlan);
   const cLvl = coinsUpgradeLevel();
   const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, null);
-  if (cPlan.count.gt(0)) { applyUpgradeBuyPlan('coins', cPlan); boughtResource = true; }
+  if (cPlan.count.gt(0)) applyUpgradeBuyPlan('coins', cPlan);
 
-  // 2. Gen upgrades — only run if NEITHER sparks nor coins upgrade was affordable
-  // this tick. Among gens, strict highest-tier-first priority: stop at the first
-  // gen (top down) with anything affordable.
-  if (!boughtResource) {
-    for (let i = state.gens.length - 1; i >= 0; i--) {
-      const pLvl = genUpgradeLevel(i);
-      const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
+  // 2. Gen upgrades — runs after sparks/coins with whatever coins remain. Strict
+  // highest-tier-first: scan from the top, stop at the first gen (top down) that
+  // has anything affordable. Lower tiers wait their turn.
+  for (let i = state.gens.length - 1; i >= 0; i--) {
+    const pLvl = genUpgradeLevel(i);
+    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
 
-      const cMaxLvl = genCostMaxLevel(i);
-      const cLvlGen = genCostLevel(i);
-      const cAvailable = cMaxLvl > 0 && cLvlGen < cMaxLvl;
-      const cPlanGen = cAvailable
-        ? computeUpgradeBuyPlan(cLvlGen, upgradeBuyAmountPct, cMaxLvl)
-        : { count: D0, cost: D0 };
+    const cMaxLvl = genCostMaxLevel(i);
+    const cLvlGen = genCostLevel(i);
+    const cAvailable = cMaxLvl > 0 && cLvlGen < cMaxLvl;
+    const cPlanGen = cAvailable
+      ? computeUpgradeBuyPlan(cLvlGen, upgradeBuyAmountPct, cMaxLvl)
+      : { count: D0, cost: D0 };
 
-      if (pPlan.count.gt(0) || cPlanGen.count.gt(0)) {
-        if (pPlan.count.gt(0)) applyUpgradeBuyPlan(genUpgradeKey(i), pPlan);
-        if (cPlanGen.count.gt(0)) applyUpgradeBuyPlan(genCostKey(i), cPlanGen);
-        break;
-      }
+    if (pPlan.count.gt(0) || cPlanGen.count.gt(0)) {
+      if (pPlan.count.gt(0)) applyUpgradeBuyPlan(genUpgradeKey(i), pPlan);
+      if (cPlanGen.count.gt(0)) applyUpgradeBuyPlan(genCostKey(i), cPlanGen);
+      break;
     }
   }
 
