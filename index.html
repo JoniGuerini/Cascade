@@ -175,6 +175,41 @@ html.dark .seg-btn.selected {
     inset 0 1px 2px rgba(0,0,0,.5),
     0 0 0 .5px rgba(0,0,0,.6);
 }
+.gen-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 8px 0 9px;
+  border-radius: 8px;
+  background: var(--btn-bg);
+  box-shadow: var(--shadow);
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  cursor: text;
+  box-sizing: border-box;
+}
+.gen-cap:hover { color: var(--text-1); }
+.gen-cap .ti { font-size: 13px; flex: none; }
+.gen-cap input {
+  width: 56px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+.gen-cap input::-webkit-outer-spin-button,
+.gen-cap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.gen-cap input::placeholder { color: var(--text-3); font-weight: 500; }
+
 .icon-btn.active {
   background: var(--accent);
   color: var(--accent-text, white);
@@ -1356,6 +1391,10 @@ html.dark .btn-modal.danger {
       <button class="icon-btn small" id="fullauto-toggle" aria-label="Full autopilot" title="Full autopilot: buys generators (next + existing) AND every affordable upgrade (gen, sparks, coins). Uses the selected % amount.">
         <i class="ti ti-robot"></i>
       </button>
+      <label class="gen-cap" title="Stop the autopilot from unlocking generators beyond this tier. Leave empty for no cap. Upgrades, sparks, coins keep flowing.">
+        <i class="ti ti-arrow-bar-to-up"></i>
+        <input type="number" id="gen-cap-input" placeholder="∞" min="1" inputmode="numeric">
+      </label>
       <button class="icon-btn small" id="scroll-top" aria-label="Scroll to top">
         <i class="ti ti-arrow-bar-to-up"></i>
       </button>
@@ -2167,6 +2206,7 @@ modalConfirm.addEventListener('click', () => {
     localStorage.removeItem('cascade-freemode-locked');
     localStorage.removeItem('cascade-autobuy');
     localStorage.removeItem('cascade-fullauto');
+    localStorage.removeItem('cascade-gen-cap');
     localStorage.setItem('cascade-needs-setup', '1');
   } catch(e) {}
   location.reload();
@@ -2654,6 +2694,26 @@ segmentEl.querySelectorAll('.seg-btn').forEach(btn => {
 });
 updateSegmentUI();
 
+// Auto-buy gen cap — user-set ceiling on which generator tiers the autopilot
+// (simple OR full) is allowed to UNLOCK / accumulate on. Empty = no cap.
+// Stored as 1-indexed gen number (e.g. 5000 means "stop at gen 5000").
+let genCap = parseInt(localStorage.getItem('cascade-gen-cap') || '0', 10);
+if (!isFinite(genCap) || genCap < 1) genCap = 0;
+const genCapInput = document.getElementById('gen-cap-input');
+if (genCap > 0) genCapInput.value = String(genCap);
+genCapInput.addEventListener('input', () => {
+  const v = parseInt(genCapInput.value, 10);
+  if (isFinite(v) && v >= 1) {
+    genCap = v;
+    localStorage.setItem('cascade-gen-cap', String(v));
+  } else {
+    genCap = 0;
+    localStorage.removeItem('cascade-gen-cap');
+  }
+});
+// Returns the highest 0-based gen index the autopilot may touch (Infinity = no cap).
+function maxAutoGenIdx() { return genCap > 0 ? genCap - 1 : Infinity; }
+
 // Auto-buy — when active, every tick try to buy the highest-tier generator
 // the player can afford, using the currently-selected buy amount (1%/10%/50%/Max).
 let autoBuyEnabled = localStorage.getItem('cascade-autobuy') === '1';
@@ -2673,19 +2733,25 @@ function tryAutoBuy(dt) {
   autoBuyAccum += dt;
   if (autoBuyAccum < 0.1) return;
   autoBuyAccum = 0;
-  // Target the next generator that hasn't been unlocked yet (bought count == 0).
-  // If all current tiers are unlocked, ensure the next one and try that.
+  // Target the next generator that hasn't been unlocked yet (bought count == 0),
+  // bounded by the user's gen cap (if any).
+  const cap = maxAutoGenIdx();
   let targetIdx = -1;
-  for (let i = 0; i < state.bought.length; i++) {
+  const scanLimit = Math.min(state.bought.length, cap + 1);
+  for (let i = 0; i < scanLimit; i++) {
     if (state.bought[i].lte(0)) { targetIdx = i; break; }
   }
   if (targetIdx === -1) {
-    targetIdx = state.bought.length;
-    ensureTier(targetIdx);
+    const next = state.bought.length;
+    if (next <= cap) {
+      targetIdx = next;
+      ensureTier(targetIdx);
+    }
   }
-  // Only buy if we can afford the next one. Otherwise wait — never fall back
-  // to buying tiers we've already unlocked.
-  if (canAffordOne(targetIdx)) buy(targetIdx, 'max');
+  // Only buy if we have a target within the cap and can afford the next one.
+  if (targetIdx >= 0 && targetIdx <= cap && canAffordOne(targetIdx)) {
+    buy(targetIdx, 'max');
+  }
 }
 
 // Full autopilot — when active, plays the entire game: buys generators (next + existing)
@@ -2727,18 +2793,26 @@ function tryFullAuto(dt) {
   } else if (slot === 2) {
     // Generator purchase: prioritize unlocking the next tier; if not affordable,
     // accumulate on the highest already-unlocked tier we can afford.
+    // Bounded by the user's gen cap (if any).
+    const cap = maxAutoGenIdx();
     let targetIdx = -1;
-    for (let i = 0; i < state.bought.length; i++) {
+    const scanLimit = Math.min(state.bought.length, cap + 1);
+    for (let i = 0; i < scanLimit; i++) {
       if (state.bought[i].lte(0)) { targetIdx = i; break; }
     }
     if (targetIdx === -1) {
-      targetIdx = state.bought.length;
-      ensureTier(targetIdx);
+      const next = state.bought.length;
+      if (next <= cap) {
+        targetIdx = next;
+        ensureTier(targetIdx);
+      }
     }
-    if (canAffordOne(targetIdx)) {
+    if (targetIdx >= 0 && targetIdx <= cap && canAffordOne(targetIdx)) {
       buy(targetIdx, 'max');
     } else {
-      for (let i = state.bought.length - 1; i >= 0; i--) {
+      // Accumulate on highest affordable already-unlocked tier within the cap.
+      const startIdx = Math.min(state.bought.length - 1, cap);
+      for (let i = startIdx; i >= 0; i--) {
         if (state.bought[i].gt(0) && canAffordOne(i)) { buy(i, 'max'); break; }
       }
     }
