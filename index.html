@@ -909,9 +909,12 @@ html.dark .buy-btn.afford:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 16px 16px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.leaderboard-list::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .lb-row {
   display: grid;
   grid-template-columns: 44px 1fr 80px 100px;
