@@ -848,29 +848,58 @@ html.dark .buy-btn.afford:hover {
 .modal-icon .ti { font-size: 22px; }
 
 .leaderboard-card {
-  max-width: 560px;
-  padding: 20px 0 0;
+  max-width: 720px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  max-height: min(720px, 88vh);
+  max-height: min(800px, 92vh);
+  overflow: hidden;
 }
 .leaderboard-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  align-items: center;
+  background: linear-gradient(180deg, var(--accent-soft), transparent);
+  border-bottom: 1px solid var(--hairline);
+}
+.leaderboard-head-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-text, white);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 24px 16px;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.4),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 4px 14px var(--accent-soft),
+    0 0 0 .5px rgba(0,0,0,.08);
 }
-.leaderboard-title {
+.leaderboard-head-icon .ti { font-size: 22px; }
+.leaderboard-head-text h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.leaderboard-sub {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--text-3);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
-.leaderboard-title .ti { font-size: 22px; color: var(--accent); }
-.leaderboard-title h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.lb-meta-dot { opacity: 0.5; }
+.lb-close-btn { align-self: start; }
 .leaderboard-tabs {
   display: flex;
   gap: 4px;
-  padding: 0 24px 14px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--hairline);
 }
 .lb-tab {
@@ -891,11 +920,59 @@ html.dark .buy-btn.afford:hover {
   color: var(--text-1);
   box-shadow: var(--shadow-pill);
 }
+.leaderboard-yourank {
+  margin: 14px 18px 0;
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.3),
+    0 0 0 1px var(--accent);
+}
+.leaderboard-yourank[hidden] { display: none; }
+.lb-yourank-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.lb-yourank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.lb-yourank-rank {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 56px;
+}
+.lb-yourank-info { flex: 1; min-width: 0; }
+.lb-yourank-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.lb-yourank-meta {
+  font-size: 11.5px;
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  margin-top: 2px;
+}
+.lb-jump {
+  padding: 6px 12px;
+  font-size: 11px;
+}
 .leaderboard-list-head {
   display: grid;
-  grid-template-columns: 44px 1fr 80px 100px;
+  grid-template-columns: 50px 1fr 70px 90px 110px;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 16px 24px 10px;
   font-size: 10.5px;
   font-weight: 500;
   text-transform: uppercase;
@@ -903,33 +980,41 @@ html.dark .buy-btn.afford:hover {
   color: var(--text-3);
 }
 .leaderboard-list-head > div:nth-child(1) { text-align: center; }
-.leaderboard-list-head > div:nth-child(3),
-.leaderboard-list-head > div:nth-child(4) { text-align: right; }
+.leaderboard-list-head > div:nth-child(3) { text-align: center; }
+.leaderboard-list-head > div:nth-child(4),
+.leaderboard-list-head > div:nth-child(5) { text-align: right; }
 .leaderboard-list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 16px 16px;
+  padding: 0 18px 12px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .leaderboard-list::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .lb-row {
   display: grid;
-  grid-template-columns: 44px 1fr 80px 100px;
+  grid-template-columns: 50px 1fr 70px 90px 110px;
   gap: 12px;
   align-items: center;
-  padding: 10px 8px;
+  padding: 10px 14px;
+  background: var(--bg-card);
   border-radius: 10px;
-  transition: background .15s;
+  box-shadow: var(--shadow-pill);
+  transition: box-shadow .15s, transform .12s;
 }
-.lb-row:hover { background: var(--bg-soft); }
+.lb-row:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 .lb-row.you {
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.3),
+    0 0 0 1px var(--accent);
 }
-.lb-row.you:hover { background: var(--accent-soft); }
+.lb-row.you:hover { transform: translateY(-1px); }
 .lb-rank {
   display: inline-flex;
   align-items: center;
@@ -940,9 +1025,19 @@ html.dark .buy-btn.afford:hover {
   font-weight: 600;
   color: var(--text-2);
 }
-.lb-rank.top-1 { color: #f59e0b; }
-.lb-rank.top-2 { color: #94a3b8; }
-.lb-rank.top-3 { color: #b45309; }
+.lb-rank.top-1 {
+  color: #f59e0b;
+  font-size: 15px;
+  text-shadow: 0 0 8px rgba(245, 158, 11, .35);
+}
+.lb-rank.top-2 {
+  color: #94a3b8;
+  font-size: 14px;
+}
+.lb-rank.top-3 {
+  color: #b45309;
+  font-size: 14px;
+}
 .lb-player {
   display: flex;
   align-items: center;
@@ -950,8 +1045,8 @@ html.dark .buy-btn.afford:hover {
   min-width: 0;
 }
 .lb-avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   background: var(--bg-soft);
   box-shadow: var(--shadow-pill);
@@ -974,6 +1069,29 @@ html.dark .buy-btn.afford:hover {
   text-overflow: ellipsis;
   min-width: 0;
 }
+.lb-name .lb-you-tag {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.lb-country {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-pill);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  justify-self: center;
+}
 .lb-tier {
   text-align: right;
   font-family: 'Geist Mono', monospace;
@@ -988,6 +1106,49 @@ html.dark .buy-btn.afford:hover {
   font-feature-settings: 'tnum';
   font-size: 13px;
   color: var(--text-2);
+}
+.leaderboard-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--hairline);
+}
+.lb-page-btn {
+  min-width: 32px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s, color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.lb-page-btn:hover:not(:disabled):not(.selected) {
+  color: var(--text-1);
+  background: var(--bg-soft);
+}
+.lb-page-btn.selected {
+  background: var(--accent);
+  color: var(--accent-text, white);
+  box-shadow: var(--shadow-pill);
+}
+.lb-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.lb-page-ellipsis {
+  padding: 0 4px;
+  color: var(--text-3);
+  font-size: 12px;
+  user-select: none;
 }
 
 .modal-card h3 {
@@ -1670,11 +1831,18 @@ html.dark .btn-modal.danger {
 <div class="modal-backdrop leaderboard-backdrop" id="leaderboard-modal" hidden>
   <div class="modal-card leaderboard-card">
     <div class="leaderboard-head">
-      <div class="leaderboard-title">
+      <div class="leaderboard-head-icon">
         <i class="ti ti-trophy"></i>
-        <h3>Leaderboard</h3>
       </div>
-      <button class="icon-btn small" id="leaderboard-close" aria-label="Close">
+      <div class="leaderboard-head-text">
+        <h3>Global Leaderboard</h3>
+        <p class="leaderboard-sub">
+          <span id="lb-meta-count">— players</span>
+          <span class="lb-meta-dot">·</span>
+          <span id="lb-meta-updated">updated just now</span>
+        </p>
+      </div>
+      <button class="icon-btn small lb-close-btn" id="leaderboard-close" aria-label="Close">
         <i class="ti ti-x"></i>
       </button>
     </div>
@@ -1683,13 +1851,28 @@ html.dark .btn-modal.danger {
       <button class="lb-tab" data-tab="month">Last 30 days</button>
       <button class="lb-tab" data-tab="week">This week</button>
     </div>
+    <div class="leaderboard-yourank" id="lb-yourank" hidden>
+      <div class="lb-yourank-label">Your rank</div>
+      <div class="lb-yourank-row">
+        <div class="lb-yourank-rank" id="lb-yourank-rank">—</div>
+        <div class="lb-yourank-info">
+          <div class="lb-yourank-name" id="lb-yourank-name">—</div>
+          <div class="lb-yourank-meta">
+            Tier <span id="lb-yourank-tier">—</span> · <span id="lb-yourank-time">—</span>
+          </div>
+        </div>
+        <button class="btn-modal cancel lb-jump" id="lb-jump-btn">Jump to me</button>
+      </div>
+    </div>
     <div class="leaderboard-list-head">
       <div>#</div>
       <div>Player</div>
+      <div>Country</div>
       <div>Tier</div>
       <div>Time</div>
     </div>
     <div class="leaderboard-list" id="leaderboard-list"></div>
+    <div class="leaderboard-pagination" id="leaderboard-pagination"></div>
   </div>
 </div>
 
@@ -3028,26 +3211,49 @@ function tryFullAuto(dt) {
   fullAutoQueueIdx = (fullAutoQueueIdx + 1) % 4;
 }
 
-// Leaderboard — mock data for layout testing. Replace with real API later.
-// Sorted by tier desc, then time asc (less time = higher rank within same tier).
-const MOCK_LEADERBOARD = [
-  { name: 'cascadeLord',    tier: 312, seconds: 18 * 3600 + 22 * 60 },
-  { name: 'oompa.loompa',   tier: 287, seconds: 12 * 3600 + 5 * 60 },
-  { name: 'genoide',        tier: 287, seconds: 14 * 3600 + 41 * 60 },
-  { name: 'sparky',         tier: 274, seconds: 9 * 3600 + 17 * 60 },
-  { name: 'idle.king.42',   tier: 251, seconds: 8 * 3600 },
-  { name: 'tower-stacker',  tier: 240, seconds: 4 * 3600 + 12 * 60 },
-  { name: 'big.bro',        tier: 240, seconds: 7 * 3600 + 48 * 60 },
-  { name: 'jonatan',        tier: 188, seconds: 1 * 3600 + 22 * 60 }, // highlighted as "you"
-  { name: 'paula.coelho',   tier: 178, seconds: 5 * 3600 + 9 * 60 },
-  { name: 'milestone.M',    tier: 165, seconds: 3 * 3600 + 40 * 60 },
-  { name: 'no.life.ever',   tier: 142, seconds: 22 * 3600 },
-  { name: 'casual.gamer',   tier: 100, seconds: 2 * 3600 + 55 * 60 },
-  { name: 'gen-Zer0',       tier:  88, seconds: 45 * 60 },
-  { name: 'newbie.99',      tier:  41, seconds: 28 * 60 },
-  { name: 'just.testing',   tier:  12, seconds: 8 * 60 },
-];
-const YOU_NAME = 'jonatan'; // mock — flag the row to highlight
+// ─────────────────────────────────────────────────────────────────────────────
+// Leaderboard — mock 1000 players for layout testing. Replace with API later.
+// ─────────────────────────────────────────────────────────────────────────────
+const YOU_NAME = 'jonatan';
+const LB_PAGE_SIZE = 100;
+
+function generateMockLeaderboard(count) {
+  const adjectives = ['cosmic','epic','lazy','sneaky','turbo','silent','crazy','mighty','dark','shiny','gold','iron','fire','ice','shadow','super','mega','ultra','noob','pro','wild','calm','quick','slow','tiny','huge','grim','pure','rough','smooth','sweet','salty','spicy','funky','jazzy','witty','bold','chill','flux','retro','neon','toxic','swift','silent','lucky','rusty','blank','hyper','cyber','quantum'];
+  const nouns = ['ninja','wizard','bot','cat','panda','dragon','tiger','snake','hawk','wolf','bear','fox','lion','eagle','shark','owl','spider','rhino','gorilla','whale','phoenix','kraken','golem','ghost','sage','knight','pirate','viking','samurai','ronin','monk','jester','witch','vampire','demon','angel','titan','specter','warden','reaper','prophet','overlord','baron','duke','king','queen','jester','rogue','bard','druid','ranger'];
+  const countries = ['BR','US','JP','DE','FR','UK','CN','IN','KR','CA','AU','MX','IT','ES','NL','SE','NO','AR','CL','PT','RU','PL','TR','VN','TH','SG','PH','ZA','NG','EG','SA','AE','IL','UA','CZ','GR','RO','HU','FI','DK','NZ','MY','ID','PE','CO'];
+
+  const players = [];
+  for (let i = 0; i < count; i++) {
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const num = Math.floor(Math.random() * 999);
+    const sep = Math.random() < 0.5 ? '.' : (Math.random() < 0.5 ? '-' : '_');
+    const name = num > 100 ? `${adj}${sep}${noun}${num}` : `${adj}${sep}${noun}`;
+
+    // Tier distribution: most players in 1–250, few in 250–600 range
+    const tierRoll = Math.random();
+    const tier = Math.max(1, Math.floor(600 * Math.pow(tierRoll, 1.8)));
+    // Time correlates loosely with tier — faster players exist at every tier
+    const baseSeconds = tier * (240 + Math.random() * 480); // 4–12 min per tier base
+    const seconds = Math.floor(baseSeconds + Math.random() * 3600);
+    const country = countries[Math.floor(Math.random() * countries.length)];
+    players.push({ name, tier, seconds, country });
+  }
+  // Plant the player so we can see "you" highlighting + jump-to-me work
+  players[Math.floor(Math.random() * count)] = {
+    name: YOU_NAME, tier: 188, seconds: 1 * 3600 + 22 * 60, country: 'BR',
+  };
+  return players;
+}
+
+const MOCK_LEADERBOARD = generateMockLeaderboard(1000);
+
+function leaderboardSort(rows) {
+  return rows.slice().sort((a, b) => b.tier - a.tier || a.seconds - b.seconds);
+}
+const SORTED_LB = leaderboardSort(MOCK_LEADERBOARD);
+const YOU_RANK = SORTED_LB.findIndex(r => r.name === YOU_NAME) + 1; // 1-indexed
+const YOU_DATA = SORTED_LB[YOU_RANK - 1];
 
 function rankClass(rank) {
   if (rank === 1) return 'top-1';
@@ -3055,50 +3261,123 @@ function rankClass(rank) {
   if (rank === 3) return 'top-3';
   return '';
 }
-function leaderboardSort(rows) {
-  return rows.slice().sort((a, b) => b.tier - a.tier || a.seconds - b.seconds);
+function rankPrefix(rank) {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return rank;
 }
-function renderLeaderboard() {
+
+let lbCurrentPage = 1;
+function renderLeaderboardPage(page) {
+  lbCurrentPage = page;
+  const totalPages = Math.ceil(SORTED_LB.length / LB_PAGE_SIZE);
+  const start = (page - 1) * LB_PAGE_SIZE;
+  const end = Math.min(SORTED_LB.length, start + LB_PAGE_SIZE);
+  const slice = SORTED_LB.slice(start, end);
   const list = document.getElementById('leaderboard-list');
-  const sorted = leaderboardSort(MOCK_LEADERBOARD);
-  list.innerHTML = sorted.map((row, i) => {
-    const rank = i + 1;
+  list.innerHTML = slice.map((row, i) => {
+    const rank = start + i + 1;
     const initials = row.name.replace(/[^a-z0-9]/gi, '').slice(0, 2).toUpperCase();
     const isYou = row.name === YOU_NAME;
     return `
-      <div class="lb-row${isYou ? ' you' : ''}">
-        <div class="lb-rank ${rankClass(rank)}">${rank}</div>
+      <div class="lb-row${isYou ? ' you' : ''}" data-rank="${rank}">
+        <div class="lb-rank ${rankClass(rank)}">${rankPrefix(rank)}</div>
         <div class="lb-player">
           <div class="lb-avatar">${initials}</div>
-          <div class="lb-name">${row.name}${isYou ? ' (you)' : ''}</div>
+          <div class="lb-name">${escapeHtml(row.name)}${isYou ? '<span class="lb-you-tag">you</span>' : ''}</div>
         </div>
-        <div class="lb-tier">${fmtTier(row.tier)}</div>
+        <div class="lb-country">${row.country}</div>
+        <div class="lb-tier">Tier ${fmtTier(row.tier)}</div>
         <div class="lb-time">${formatElapsed(row.seconds)}</div>
       </div>
     `;
   }).join('');
+  list.scrollTop = 0;
+  renderPagination(page, totalPages);
 }
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderPagination(page, total) {
+  const pag = document.getElementById('leaderboard-pagination');
+  // Build page list with ellipses: always show first, last, current ±1, plus 2 and last-1 if close
+  const pages = new Set([1, total, page - 1, page, page + 1]);
+  if (page <= 3) { pages.add(2); pages.add(3); pages.add(4); }
+  if (page >= total - 2) { pages.add(total - 1); pages.add(total - 2); pages.add(total - 3); }
+  const sorted = [...pages].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+  let html = '';
+  html += `<button class="lb-page-btn" id="lb-prev" ${page === 1 ? 'disabled' : ''} aria-label="Previous"><i class="ti ti-chevron-left"></i></button>`;
+  let prev = 0;
+  for (const p of sorted) {
+    if (prev && p > prev + 1) html += `<span class="lb-page-ellipsis">…</span>`;
+    html += `<button class="lb-page-btn${p === page ? ' selected' : ''}" data-page="${p}">${p}</button>`;
+    prev = p;
+  }
+  html += `<button class="lb-page-btn" id="lb-next" ${page === total ? 'disabled' : ''} aria-label="Next"><i class="ti ti-chevron-right"></i></button>`;
+  pag.innerHTML = html;
+
+  pag.querySelector('#lb-prev').addEventListener('click', () => { if (page > 1) renderLeaderboardPage(page - 1); });
+  pag.querySelector('#lb-next').addEventListener('click', () => { if (page < total) renderLeaderboardPage(page + 1); });
+  pag.querySelectorAll('[data-page]').forEach(b => {
+    b.addEventListener('click', () => renderLeaderboardPage(parseInt(b.dataset.page, 10)));
+  });
+}
+
+function renderYourRank() {
+  const box = document.getElementById('lb-yourank');
+  if (!YOU_DATA) { box.setAttribute('hidden', ''); return; }
+  box.removeAttribute('hidden');
+  document.getElementById('lb-yourank-rank').textContent = '#' + YOU_RANK;
+  document.getElementById('lb-yourank-name').textContent = YOU_DATA.name;
+  document.getElementById('lb-yourank-tier').textContent = fmtTier(YOU_DATA.tier);
+  document.getElementById('lb-yourank-time').textContent = formatElapsed(YOU_DATA.seconds);
+}
+
+function renderLeaderboardMeta() {
+  document.getElementById('lb-meta-count').textContent =
+    SORTED_LB.length.toLocaleString('en-US') + ' players';
+  document.getElementById('lb-meta-updated').textContent = 'updated just now';
+}
+
 const leaderboardModal = document.getElementById('leaderboard-modal');
-document.getElementById('leaderboard-btn').addEventListener('click', () => {
-  renderLeaderboard();
+function openLeaderboard() {
+  renderLeaderboardMeta();
+  renderYourRank();
+  // Open on the page containing the player; fall back to page 1
+  const targetPage = YOU_RANK > 0 ? Math.ceil(YOU_RANK / LB_PAGE_SIZE) : 1;
+  renderLeaderboardPage(targetPage);
   leaderboardModal.removeAttribute('hidden');
-});
-document.getElementById('leaderboard-close').addEventListener('click', () => {
-  leaderboardModal.setAttribute('hidden', '');
-});
+}
+function closeLeaderboard() { leaderboardModal.setAttribute('hidden', ''); }
+
+document.getElementById('leaderboard-btn').addEventListener('click', openLeaderboard);
+document.getElementById('leaderboard-close').addEventListener('click', closeLeaderboard);
 leaderboardModal.addEventListener('click', (e) => {
-  if (e.target === leaderboardModal) leaderboardModal.setAttribute('hidden', '');
+  if (e.target === leaderboardModal) closeLeaderboard();
+});
+document.getElementById('lb-jump-btn').addEventListener('click', () => {
+  if (!YOU_RANK) return;
+  const targetPage = Math.ceil(YOU_RANK / LB_PAGE_SIZE);
+  renderLeaderboardPage(targetPage);
+  // Scroll the highlighted row into view
+  setTimeout(() => {
+    const row = document.querySelector(`.lb-row[data-rank="${YOU_RANK}"]`);
+    if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 50);
 });
 document.querySelectorAll('.lb-tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.lb-tab').forEach(x => x.classList.toggle('selected', x === t));
-    // Mock — same data on every tab for now
-    renderLeaderboard();
+    // Mock — every tab shows the same dataset for now
+    renderLeaderboardPage(1);
   });
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !leaderboardModal.hasAttribute('hidden')) {
-    leaderboardModal.setAttribute('hidden', '');
+    closeLeaderboard();
   }
 });
 
