@@ -1277,6 +1277,10 @@ html.dark .btn-modal.danger {
         <i class="ti ti-activity"></i>
         <span id="fps-text">— fps</span>
       </span>
+      <span class="play-time" id="cpu-ind" hidden title="System pressure (Compute Pressure API)">
+        <i class="ti ti-cpu"></i>
+        <span id="cpu-text">—</span>
+      </span>
       <span class="play-time">
         <i class="ti ti-clock"></i>
         <span id="elapsed-text">0s</span>
@@ -2083,6 +2087,33 @@ let lastTick = performance.now();
 let fpsLast = lastTick;
 let fpsFrames = 0;
 const fpsEl = document.getElementById('fps-text');
+
+// Compute Pressure API — Chromium-only proxy for "how stressed is the CPU".
+// Maps the 4 official states to a colored label. If the API is missing, the
+// indicator stays hidden.
+(function setupCpuPressure() {
+  const cpuInd = document.getElementById('cpu-ind');
+  const cpuText = document.getElementById('cpu-text');
+  if (typeof PressureObserver === 'undefined') return;
+  const labels = {
+    nominal:  { text: 'idle',     color: 'var(--pos)'   },
+    fair:     { text: 'normal',   color: 'var(--text-1)' },
+    serious:  { text: 'high',     color: 'var(--accent)' },
+    critical: { text: 'critical', color: 'var(--neg)'   },
+  };
+  try {
+    const observer = new PressureObserver((records) => {
+      const last = records[records.length - 1];
+      if (!last) return;
+      const meta = labels[last.state] || { text: last.state, color: 'var(--text-2)' };
+      cpuText.textContent = meta.text;
+      cpuText.style.color = meta.color;
+    });
+    observer.observe('cpu', { sampleInterval: 1000 }).then(() => {
+      cpuInd.removeAttribute('hidden');
+    }).catch(() => {/* permission denied or unsupported source */});
+  } catch (e) { /* unavailable */ }
+})();
 function loop(now) {
   const dt = Math.min((now - lastTick) / 1000, 0.1);
   lastTick = now;
