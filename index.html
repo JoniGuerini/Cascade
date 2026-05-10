@@ -2818,8 +2818,12 @@ function tryFullAuto(dt) {
     }
   } else {
     // Gen upgrade — strict highest-tier-first. Stop at the first gen (top down)
-    // that has anything affordable (production or cost reduction).
+    // that has anything affordable (production or cost reduction). Skip any gen
+    // that hasn't actually been bought yet (state.gens may include placeholder
+    // tiers ensureTier'd by the autopilot or popover lookups).
     for (let i = state.gens.length - 1; i >= 0; i--) {
+      if (!state.bought[i] || state.bought[i].lte(0)) continue;
+
       const pLvl = genUpgradeLevel(i);
       const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
 
