@@ -1308,6 +1308,10 @@ html.dark .btn-modal.danger {
       </div>
     </div>
     <div class="controls-right">
+      <span class="play-time" title="Score: highest tier reached × 10B − seconds played. Same tier, less time = higher rank.">
+        <i class="ti ti-trophy"></i>
+        <span id="score-text">0</span>
+      </span>
       <span class="play-time">
         <i class="ti ti-activity"></i>
         <span id="fps-text">— fps</span>
@@ -1946,6 +1950,20 @@ let lastVisibleCount = 0;
 
 const maxTierEl = document.getElementById('max-tier-text');
 let lastBadgeWidth = '38px';
+// Score formula: tier dominates, time is the tiebreaker (less time = higher score).
+// Within the same tier, every second played reduces the score by 1, but tier always
+// wins by a margin of 10B per level — so a tier-101 player always beats any tier-100
+// player regardless of time. Result is a non-negative integer, leaderboard-friendly.
+const SCORE_TIER_WEIGHT = 10_000_000_000;
+function computeScore(elapsedSeconds) {
+  let highestTier = 0;
+  for (let i = state.bought.length - 1; i >= 0; i--) {
+    if (state.bought[i] && state.bought[i].gt(0)) { highestTier = i + 1; break; }
+  }
+  const score = highestTier * SCORE_TIER_WEIGHT - (elapsedSeconds | 0);
+  return Math.max(0, score);
+}
+
 function render() {
   document.getElementById('energy').textContent = fmt(state.energy);
   document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(genUpgradeMult(0)).mul(PROD_RATE));
@@ -2089,7 +2107,9 @@ function render() {
     if (r.buyMax.textContent !== maxText) r.buyMax.textContent = maxText;
   }
 
-  document.getElementById('elapsed-text').textContent = formatElapsed(isInSetup ? 0 : Math.floor((Date.now() - state.startTime) / 1000));
+  const elapsedSeconds = isInSetup ? 0 : Math.floor((Date.now() - state.startTime) / 1000);
+  document.getElementById('elapsed-text').textContent = formatElapsed(elapsedSeconds);
+  document.getElementById('score-text').textContent = fmtInt(computeScore(elapsedSeconds));
 }
 
 function formatElapsed(elapsed) {
