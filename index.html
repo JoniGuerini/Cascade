@@ -2665,28 +2665,37 @@ function tryFullAuto(dt) {
   if (fullAutoAccum < 0.1) return;
   fullAutoAccum = 0;
 
-  // 1. Spend coins on every affordable upgrade. Iterates per-gen for production +
-  // cost reduction, then sparks + coins. Each call uses the current pct.
-  for (let i = 0; i < state.gens.length; i++) {
-    const pLvl = genUpgradeLevel(i);
-    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
-    if (pPlan.count.gt(0)) applyUpgradeBuyPlan(genUpgradeKey(i), pPlan);
+  // 1. Sparks + coins upgrades — TOP priority. Try these first.
+  let boughtResource = false;
+  const sLvl = sparksUpgradeLevel();
+  const sPlan = computeUpgradeBuyPlan(sLvl, upgradeBuyAmountPct, null);
+  if (sPlan.count.gt(0)) { applyUpgradeBuyPlan('sparks', sPlan); boughtResource = true; }
+  const cLvl = coinsUpgradeLevel();
+  const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, null);
+  if (cPlan.count.gt(0)) { applyUpgradeBuyPlan('coins', cPlan); boughtResource = true; }
 
-    const cMaxLvl = genCostMaxLevel(i);
-    if (cMaxLvl > 0) {
-      const cLvl = genCostLevel(i);
-      if (cLvl < cMaxLvl) {
-        const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl);
-        if (cPlan.count.gt(0)) applyUpgradeBuyPlan(genCostKey(i), cPlan);
+  // 2. Gen upgrades — only run if NEITHER sparks nor coins upgrade was affordable
+  // this tick. Among gens, strict highest-tier-first priority: stop at the first
+  // gen (top down) with anything affordable.
+  if (!boughtResource) {
+    for (let i = state.gens.length - 1; i >= 0; i--) {
+      const pLvl = genUpgradeLevel(i);
+      const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
+
+      const cMaxLvl = genCostMaxLevel(i);
+      const cLvlGen = genCostLevel(i);
+      const cAvailable = cMaxLvl > 0 && cLvlGen < cMaxLvl;
+      const cPlanGen = cAvailable
+        ? computeUpgradeBuyPlan(cLvlGen, upgradeBuyAmountPct, cMaxLvl)
+        : { count: D0, cost: D0 };
+
+      if (pPlan.count.gt(0) || cPlanGen.count.gt(0)) {
+        if (pPlan.count.gt(0)) applyUpgradeBuyPlan(genUpgradeKey(i), pPlan);
+        if (cPlanGen.count.gt(0)) applyUpgradeBuyPlan(genCostKey(i), cPlanGen);
+        break;
       }
     }
   }
-  const sLvl = sparksUpgradeLevel();
-  const sPlan = computeUpgradeBuyPlan(sLvl, upgradeBuyAmountPct, null);
-  if (sPlan.count.gt(0)) applyUpgradeBuyPlan('sparks', sPlan);
-  const cLvl = coinsUpgradeLevel();
-  const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, null);
-  if (cPlan.count.gt(0)) applyUpgradeBuyPlan('coins', cPlan);
 
   // 2. Generators: prioritize unlocking the next tier; if not affordable, accumulate
   // on the highest already-unlocked tier we can afford.
