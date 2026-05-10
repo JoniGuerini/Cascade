@@ -1950,18 +1950,17 @@ let lastVisibleCount = 0;
 
 const maxTierEl = document.getElementById('max-tier-text');
 let lastBadgeWidth = '38px';
-// Score formula: tier dominates, time is the tiebreaker (less time = higher score).
-// Within the same tier, every second played reduces the score by 1, but tier always
-// wins by a margin of 10B per level — so a tier-101 player always beats any tier-100
-// player regardless of time. Result is a non-negative integer, leaderboard-friendly.
-const SCORE_TIER_WEIGHT = 10_000_000_000;
+// Score formula: tier and time on the same scale — 1 tier ≈ 1 hour (3600s).
+// score = tier × 3600 − secondsPlayed
+// So tier N+1 only beats tier N if it was reached within 1 hour difference.
+// May be negative for slow runs; that's fine — leaderboard sorts naturally.
+const SCORE_TIER_WEIGHT = 3600;
 function computeScore(elapsedSeconds) {
   let highestTier = 0;
   for (let i = state.bought.length - 1; i >= 0; i--) {
     if (state.bought[i] && state.bought[i].gt(0)) { highestTier = i + 1; break; }
   }
-  const score = highestTier * SCORE_TIER_WEIGHT - (elapsedSeconds | 0);
-  return Math.max(0, score);
+  return highestTier * SCORE_TIER_WEIGHT - (elapsedSeconds | 0);
 }
 
 function render() {
