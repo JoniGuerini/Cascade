@@ -1342,8 +1342,11 @@ html.dark .btn-modal.danger {
         <button class="seg-btn" data-amt="50">50%</button>
         <button class="seg-btn selected" data-amt="100">Max</button>
       </div>
-      <button class="icon-btn small" id="autobuy-toggle" aria-label="Auto-buy" title="Auto-buy: hold-buys the highest affordable generator (uses the selected % amount)">
+      <button class="icon-btn small" id="autobuy-toggle" aria-label="Auto-buy" title="Auto-buy: keeps unlocking the next generator (uses the selected % amount)">
         <i class="ti ti-bolt"></i>
+      </button>
+      <button class="icon-btn small" id="fullauto-toggle" aria-label="Full autopilot" title="Full autopilot: buys generators (next + existing) AND every affordable upgrade (gen, sparks, coins). Uses the selected % amount.">
+        <i class="ti ti-robot"></i>
       </button>
       <button class="icon-btn small" id="scroll-top" aria-label="Scroll to top">
         <i class="ti ti-arrow-bar-to-up"></i>
@@ -2074,6 +2077,7 @@ function loop(now) {
   if (!isInSetup) {
     simulate(dt);
     tryAutoBuy(dt);
+    tryFullAuto(dt);
   }
   render();
   fpsFrames++;
@@ -2119,6 +2123,7 @@ modalConfirm.addEventListener('click', () => {
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem('cascade-freemode-locked');
     localStorage.removeItem('cascade-autobuy');
+    localStorage.removeItem('cascade-fullauto');
     localStorage.setItem('cascade-needs-setup', '1');
   } catch(e) {}
   location.reload();
@@ -2620,7 +2625,7 @@ updateAutoBuyUI();
 
 let autoBuyAccum = 0;
 function tryAutoBuy(dt) {
-  if (!autoBuyEnabled || isInSetup) return;
+  if (!autoBuyEnabled || fullAutoEnabled || isInSetup) return;
   // Throttle to ~10 attempts/sec so very fast frame rates don't melt the CPU
   autoBuyAccum += dt;
   if (autoBuyAccum < 0.1) return;
@@ -2638,6 +2643,68 @@ function tryAutoBuy(dt) {
   // Only buy if we can afford the next one. Otherwise wait — never fall back
   // to buying tiers we've already unlocked.
   if (canAffordOne(targetIdx)) buy(targetIdx, 'max');
+}
+
+// Full autopilot — when active, plays the entire game: buys generators (next + existing)
+// AND every affordable upgrade (per-gen production, per-gen cost reduction, sparks, coins).
+// Uses the same buy-amount % as everything else. Default OFF; cleared on save reset.
+let fullAutoEnabled = localStorage.getItem('cascade-fullauto') === '1';
+const fullautoBtn = document.getElementById('fullauto-toggle');
+function updateFullAutoUI() { fullautoBtn.classList.toggle('active', fullAutoEnabled); }
+fullautoBtn.addEventListener('click', () => {
+  fullAutoEnabled = !fullAutoEnabled;
+  localStorage.setItem('cascade-fullauto', fullAutoEnabled ? '1' : '0');
+  updateFullAutoUI();
+});
+updateFullAutoUI();
+
+let fullAutoAccum = 0;
+function tryFullAuto(dt) {
+  if (!fullAutoEnabled || isInSetup) return;
+  fullAutoAccum += dt;
+  if (fullAutoAccum < 0.1) return;
+  fullAutoAccum = 0;
+
+  // 1. Spend coins on every affordable upgrade. Iterates per-gen for production +
+  // cost reduction, then sparks + coins. Each call uses the current pct.
+  for (let i = 0; i < state.gens.length; i++) {
+    const pLvl = genUpgradeLevel(i);
+    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
+    if (pPlan.count.gt(0)) applyUpgradeBuyPlan(genUpgradeKey(i), pPlan);
+
+    const cMaxLvl = genCostMaxLevel(i);
+    if (cMaxLvl > 0) {
+      const cLvl = genCostLevel(i);
+      if (cLvl < cMaxLvl) {
+        const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl);
+        if (cPlan.count.gt(0)) applyUpgradeBuyPlan(genCostKey(i), cPlan);
+      }
+    }
+  }
+  const sLvl = sparksUpgradeLevel();
+  const sPlan = computeUpgradeBuyPlan(sLvl, upgradeBuyAmountPct, null);
+  if (sPlan.count.gt(0)) applyUpgradeBuyPlan('sparks', sPlan);
+  const cLvl = coinsUpgradeLevel();
+  const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, null);
+  if (cPlan.count.gt(0)) applyUpgradeBuyPlan('coins', cPlan);
+
+  // 2. Generators: prioritize unlocking the next tier; if not affordable, accumulate
+  // on the highest already-unlocked tier we can afford.
+  let targetIdx = -1;
+  for (let i = 0; i < state.bought.length; i++) {
+    if (state.bought[i].lte(0)) { targetIdx = i; break; }
+  }
+  if (targetIdx === -1) {
+    targetIdx = state.bought.length;
+    ensureTier(targetIdx);
+  }
+  if (canAffordOne(targetIdx)) {
+    buy(targetIdx, 'max');
+  } else {
+    for (let i = state.bought.length - 1; i >= 0; i--) {
+      if (state.bought[i].gt(0) && canAffordOne(i)) { buy(i, 'max'); break; }
+    }
+  }
 }
 
 render();
