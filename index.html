@@ -2666,33 +2666,54 @@ function updateFullAutoUI() { fullautoBtn.classList.toggle('active', fullAutoEna
 fullautoBtn.addEventListener('click', () => {
   fullAutoEnabled = !fullAutoEnabled;
   localStorage.setItem('cascade-fullauto', fullAutoEnabled ? '1' : '0');
+  // Reset queue to start fresh from the top (coins) every time it turns on.
+  if (fullAutoEnabled) fullAutoQueueIdx = 0;
   updateFullAutoUI();
 });
 updateFullAutoUI();
 
 let fullAutoAccum = 0;
-let fullAutoQueueIdx = 0; // 0 = coins, 1 = sparks, 2 = gen — cycles each tick
+// Fixed cycle: 0 = coins upgrade, 1 = sparks upgrade, 2 = generator purchase, 3 = gen upgrade.
+// Always starts at 0 (coins) on load and on toggle-on, then advances one step per tick.
+let fullAutoQueueIdx = 0;
 function tryFullAuto(dt) {
   if (!fullAutoEnabled || isInSetup) return;
   fullAutoAccum += dt;
   if (fullAutoAccum < 0.1) return;
   fullAutoAccum = 0;
 
-  // Round-robin queue: spend on ONE upgrade category per tick, cycling
-  // coins → sparks → gen → coins → ... so all three get equal turns even when
-  // one category has constant supply (e.g. milestone coin payouts).
   const slot = fullAutoQueueIdx;
   if (slot === 0) {
+    // Coins upgrade
     const lvl = coinsUpgradeLevel();
     const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
     if (plan.count.gt(0)) applyUpgradeBuyPlan('coins', plan);
   } else if (slot === 1) {
+    // Sparks upgrade
     const lvl = sparksUpgradeLevel();
     const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
     if (plan.count.gt(0)) applyUpgradeBuyPlan('sparks', plan);
+  } else if (slot === 2) {
+    // Generator purchase: prioritize unlocking the next tier; if not affordable,
+    // accumulate on the highest already-unlocked tier we can afford.
+    let targetIdx = -1;
+    for (let i = 0; i < state.bought.length; i++) {
+      if (state.bought[i].lte(0)) { targetIdx = i; break; }
+    }
+    if (targetIdx === -1) {
+      targetIdx = state.bought.length;
+      ensureTier(targetIdx);
+    }
+    if (canAffordOne(targetIdx)) {
+      buy(targetIdx, 'max');
+    } else {
+      for (let i = state.bought.length - 1; i >= 0; i--) {
+        if (state.bought[i].gt(0) && canAffordOne(i)) { buy(i, 'max'); break; }
+      }
+    }
   } else {
     // Gen upgrade — strict highest-tier-first. Stop at the first gen (top down)
-    // that has anything affordable.
+    // that has anything affordable (production or cost reduction).
     for (let i = state.gens.length - 1; i >= 0; i--) {
       const pLvl = genUpgradeLevel(i);
       const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
@@ -2713,25 +2734,7 @@ function tryFullAuto(dt) {
   }
   // Advance queue every tick — even if this slot bought nothing, the others get
   // their fair turn instead of being starved.
-  fullAutoQueueIdx = (fullAutoQueueIdx + 1) % 3;
-
-  // 2. Generators: prioritize unlocking the next tier; if not affordable, accumulate
-  // on the highest already-unlocked tier we can afford.
-  let targetIdx = -1;
-  for (let i = 0; i < state.bought.length; i++) {
-    if (state.bought[i].lte(0)) { targetIdx = i; break; }
-  }
-  if (targetIdx === -1) {
-    targetIdx = state.bought.length;
-    ensureTier(targetIdx);
-  }
-  if (canAffordOne(targetIdx)) {
-    buy(targetIdx, 'max');
-  } else {
-    for (let i = state.bought.length - 1; i >= 0; i--) {
-      if (state.bought[i].gt(0) && canAffordOne(i)) { buy(i, 'max'); break; }
-    }
-  }
+  fullAutoQueueIdx = (fullAutoQueueIdx + 1) % 4;
 }
 
 render();
