@@ -379,7 +379,7 @@ html.dark .hero-btn:hover {
 .col-headers {
   flex: none;
   display: grid;
-  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 12px 20px;
   font-size: 10.5px;
@@ -390,7 +390,8 @@ html.dark .hero-btn:hover {
 }
 .col-headers > div:nth-child(2) { text-align: center; }
 .col-headers > div:nth-child(3),
-.col-headers > div:nth-child(4) { text-align: center; }
+.col-headers > div:nth-child(4),
+.col-headers > div:nth-child(5) { text-align: center; }
 .cost-header {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -417,7 +418,7 @@ html.dark .hero-btn:hover {
 
 .gen-row {
   display: grid;
-  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 92px 92px;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 1fr 92px 92px;
   gap: 12px;
   padding: 14px 20px;
   align-items: center;
@@ -1202,10 +1203,13 @@ html.dark .btn-modal.danger {
     padding: 12px 14px;
     gap: 8px;
   }
+  /* Mobile: hide Rate (4), Milestones (5), and the trailing buy column */
   .col-headers > div:nth-child(4),
+  .col-headers > div:nth-child(5),
   .col-headers > div:nth-child(8),
   .gen-row > div:nth-child(4),
-  .gen-row > div:nth-child(7) { display: none; }
+  .gen-row > div:nth-child(5),
+  .gen-row > div:nth-child(8) { display: none; }
   .tier-badge { width: 32px; height: 32px; font-size: 11px; }
   .gen-num { font-size: 12px; }
   .buy-btn { font-size: 11px; padding: 7px 4px; }
@@ -1362,6 +1366,7 @@ html.dark .btn-modal.danger {
     <div>Lv</div>
     <div>Owned</div>
     <div>Rate</div>
+    <div>Milestones</div>
     <div class="cost-header"><span>Cost</span></div>
     <div></div>
     <div></div>
@@ -1821,6 +1826,7 @@ function addRow(idx) {
     <div class="upgrade-cell"><button type="button" class="upgrade-pill" title="Upgrade this generator">+0</button></div>
     <div class="gen-num owned"></div>
     <div class="gen-num rate dim"></div>
+    <div class="gen-num milestones dim"></div>
     <div class="cost-group">
       <span class="cost-energy">
         <svg class="cost-icon" viewBox="0 0 16 16" fill="currentColor" shape-rendering="geometricPrecision" aria-hidden="true">
@@ -1877,6 +1883,7 @@ function addRow(idx) {
     row,
     owned: row.querySelector('.owned'),
     rate: row.querySelector('.rate'),
+    milestones: row.querySelector('.milestones'),
     costEnergy: row.querySelector('.cost-energy'),
     costEnergyVal: row.querySelector('.cost-energy .cost-val'),
     costPrev: row.querySelector('.cost-prev'),
@@ -2011,6 +2018,11 @@ function render() {
     r.owned.classList.toggle('muted', owned.lt(0.01));
     r.rate.textContent = owned.gt(0.01) ? '+' + fmt(tierRate) + '/s' : '—';
     r.rate.classList.toggle('muted', owned.lte(0.01));
+
+    const milestonesReached = state.milestonesClaimed[idx] || D0;
+    const hasMilestones = milestonesReached.gt(0);
+    r.milestones.textContent = hasMilestones ? fmtInt(milestonesReached) : '—';
+    r.milestones.classList.toggle('muted', !hasMilestones);
 
     r.costEnergyVal.textContent = fmt(cost);
     r.costEnergy.classList.toggle('lacking', !hasEnergy);
