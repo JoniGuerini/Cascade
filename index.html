@@ -861,7 +861,6 @@ html.dark .buy-btn.afford:hover {
   gap: 14px;
   padding: 22px 24px 18px;
   align-items: center;
-  background: linear-gradient(180deg, var(--accent-soft), transparent);
   border-bottom: 1px solid var(--hairline);
 }
 .leaderboard-head-icon {
@@ -925,9 +924,7 @@ html.dark .buy-btn.afford:hover {
   padding: 12px 14px;
   background: var(--accent-soft);
   border-radius: 12px;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.3),
-    0 0 0 1px var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .leaderboard-yourank[hidden] { display: none; }
 .lb-yourank-label {
@@ -988,7 +985,8 @@ html.dark .buy-btn.afford:hover {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 18px 12px;
+  padding: 12px 10px;
+  background: var(--bg-table);
   scrollbar-width: none;
   -ms-overflow-style: none;
   display: flex;
@@ -1004,15 +1002,13 @@ html.dark .buy-btn.afford:hover {
   padding: 10px 14px;
   background: var(--bg-card);
   border-radius: 10px;
-  box-shadow: var(--shadow-pill);
+  box-shadow: var(--shadow);
   transition: box-shadow .15s, transform .12s;
 }
-.lb-row:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.lb-row:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
 .lb-row.you {
   background: var(--accent-soft);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.3),
-    0 0 0 1px var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .lb-row.you:hover { transform: translateY(-1px); }
 .lb-rank {
