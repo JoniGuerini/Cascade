@@ -1695,7 +1695,7 @@ html.dark .btn-modal.danger {
       <button class="icon-btn small" id="fullauto-toggle" aria-label="Full autopilot" title="Full autopilot: buys generators (next + existing) AND every affordable upgrade (gen, sparks, coins). Uses the selected % amount.">
         <i class="ti ti-robot"></i>
       </button>
-      <button class="icon-btn small" id="equalizer-toggle" aria-label="Equalizer" title="Equalizer: buys gen upgrades top-down keeping every generator at the same upgrade level. Won't push the top higher until every gen has caught up.">
+      <button class="icon-btn small" id="equalizer-toggle" aria-label="Equalizer" title="Equalizer: buys gen upgrades bottom-up keeping every generator at the same upgrade level. Cheap tiers first so coins are spread across as many gens as possible.">
         <i class="ti ti-equal"></i>
       </button>
       <button class="icon-btn small" id="stress-test-btn" aria-label="Stress test" title="Stress test: grants 1 unit of the next 1,000 generators. Click again to keep extending. For testing only.">
@@ -3251,15 +3251,17 @@ function tryEqualizer(dt) {
   if (equalizerAccum < 0.1) return;
   equalizerAccum = 0;
 
-  // Collect owned gens in top-down order
+  // Collect owned gens in bottom-up order. Cheaper gens go first so a single
+  // tick's coin budget is spread across many tiers instead of being burned on
+  // the expensive top-tier upgrades (cost scales with tier number).
   const owned = [];
-  for (let i = state.gens.length - 1; i >= 0; i--) {
+  for (let i = 0; i < state.gens.length; i++) {
     if (state.bought[i] && state.bought[i].gt(0)) owned.push(i);
   }
   if (owned.length === 0) return;
 
   // PRODUCTION: find the minimum upgrade level, then buy 1 on every gen at that
-  // level (top-down) while coins last. Skips any gen already above the minimum.
+  // level (bottom-up) while coins last. Skips any gen already above the minimum.
   let minProdLvl = Infinity;
   for (const idx of owned) minProdLvl = Math.min(minProdLvl, genUpgradeLevel(idx));
   for (const idx of owned) {
