@@ -1695,6 +1695,12 @@ html.dark .btn-modal.danger {
       <button class="icon-btn small" id="fullauto-toggle" aria-label="Full autopilot" title="Full autopilot: buys generators (next + existing) AND every affordable upgrade (gen, sparks, coins). Uses the selected % amount.">
         <i class="ti ti-robot"></i>
       </button>
+      <button class="icon-btn small" id="equalizer-toggle" aria-label="Equalizer" title="Equalizer: buys gen upgrades top-down keeping every generator at the same upgrade level. Won't push the top higher until every gen has caught up.">
+        <i class="ti ti-equal"></i>
+      </button>
+      <button class="icon-btn small" id="stress-test-btn" aria-label="Stress test" title="Stress test: instantly grants 1 unit of generators 1 through 10,000. For testing only.">
+        <i class="ti ti-flask"></i>
+      </button>
       <label class="gen-cap" title="Stop the autopilot from unlocking generators beyond this tier. Leave empty for no cap. Upgrades, sparks, coins keep flowing.">
         <i class="ti ti-arrow-bar-to-up"></i>
         <input type="number" id="gen-cap-input" placeholder="∞" min="1" inputmode="numeric">
@@ -1729,6 +1735,7 @@ html.dark .btn-modal.danger {
   <div class="upgrade-popover-header">
     <div class="upgrade-popover-title" id="upg-title">—</div>
     <div class="amount-segment upg-segment" id="upg-amount-segment">
+      <button class="seg-btn" data-amt="0">1</button>
       <button class="seg-btn" data-amt="1">1%</button>
       <button class="seg-btn" data-amt="10">10%</button>
       <button class="seg-btn" data-amt="50">50%</button>
@@ -1952,6 +1959,20 @@ function ensureTier(idx) {
   }
 }
 
+// Incrementally tracked count of tiers with bought > 0. Avoids a full filter
+// pass through state.bought every render frame. Invalidate (set to null) on
+// load/reset; bump from inside buy() when a tier flips from 0 → >0.
+let _unlockedCount = null;
+function getUnlockedCount() {
+  if (_unlockedCount !== null) return _unlockedCount;
+  let count = 0;
+  for (let i = 0; i < state.bought.length; i++) {
+    if (state.bought[i].gt(0)) count++;
+  }
+  _unlockedCount = count;
+  return count;
+}
+
 const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No'];
 
 function letterSuffix(idx) {
@@ -2062,17 +2083,30 @@ function maxAffordable(idx, pct) {
   return { count, energyCost: count.mul(e), prevCost: count.mul(p), sparkCost: count };
 }
 
+let _milestoneAccum = 0;
 function simulate(dt) {
-  const factor = PROD_RATE * dt;
+  // Pre-create the per-frame factor as a Decimal once (instead of as a JS number
+  // that break_eternity would re-wrap for every multiplication inside the loop).
+  const factorD = D(PROD_RATE * dt);
   const n = state.gens.length;
   for (let i = n - 1; i > 0; i--) {
-    state.gens[i - 1] = state.gens[i - 1].add(state.gens[i].mul(genUpgradeMult(i)).mul(factor));
+    const g = state.gens[i];
+    if (g.sign === 0) continue; // nothing to cascade from this tier
+    state.gens[i - 1] = state.gens[i - 1].add(g.mul(genUpgradeMult(i)).mul(factorD));
   }
-  state.energy = state.energy.add(state.gens[0].mul(genUpgradeMult(0)).mul(factor));
+  if (state.gens[0].sign !== 0) {
+    state.energy = state.energy.add(state.gens[0].mul(genUpgradeMult(0)).mul(factorD));
+  }
   if (state.bought[0] && state.bought[0].gt(0)) {
     state.sparks = state.sparks.add(sparksUpgradeMult().mul(SPARK_RATE * dt));
   }
-  checkMilestones();
+  // Throttle milestone scanning to ~2 Hz — it walks every gen and does log10 work,
+  // and the milestone payout doesn't need sub-second precision.
+  _milestoneAccum += dt;
+  if (_milestoneAccum >= 0.5) {
+    _milestoneAccum = 0;
+    checkMilestones();
+  }
 }
 
 // Coins API — use these to spend/check the milestone currency for upgrades
@@ -2108,8 +2142,22 @@ function buyUpgrade(id, cost) {
 // Per-generator upgrades (production + cost reduction)
 function genUpgradeKey(idx) { return 'gen-' + idx; }
 function genUpgradeLevel(idx) { return getUpgradeLevel(genUpgradeKey(idx)); }
-function genUpgradeMult(idx) { return Decimal.pow(2, genUpgradeLevel(idx)); }
-function genUpgradeNextCost(idx) { return Decimal.pow(2, genUpgradeLevel(idx)); }
+// Cache: avoid re-doing Decimal.pow(2, lvl) every frame for each gen. Invalidates
+// automatically when the cached upgrade level no longer matches the live level.
+const _genUpgradeMultCache = [];
+const _genUpgradeMultCacheLvl = [];
+function genUpgradeMult(idx) {
+  const lvl = genUpgradeLevel(idx);
+  if (_genUpgradeMultCacheLvl[idx] !== lvl) {
+    _genUpgradeMultCache[idx] = Decimal.pow(2, lvl);
+    _genUpgradeMultCacheLvl[idx] = lvl;
+  }
+  return _genUpgradeMultCache[idx];
+}
+// Gen upgrades use tier as the cost base: gen 1 → base 1, gen 2 → base 2, …
+// Cost at level L = base × 2^L, so the cost ramp scales with how deep the gen is.
+function genUpgradeBase(idx) { return D(idx + 1); }
+function genUpgradeNextCost(idx) { return Decimal.pow(2, genUpgradeLevel(idx)).mul(genUpgradeBase(idx)); }
 function buyGenUpgrade(idx) {
   return buyUpgrade(genUpgradeKey(idx), genUpgradeNextCost(idx));
 }
@@ -2118,7 +2166,7 @@ function buyGenUpgrade(idx) {
 function genCostKey(idx) { return 'gen-' + idx + '-cost'; }
 function genCostLevel(idx) { return getUpgradeLevel(genCostKey(idx)); }
 function genCostMult(idx) { return Decimal.pow(0.5, genCostLevel(idx)); }
-function genCostNextCost(idx) { return Decimal.pow(2, genCostLevel(idx)); }
+function genCostNextCost(idx) { return Decimal.pow(2, genCostLevel(idx)).mul(genUpgradeBase(idx)); }
 function genCostMaxLevel(idx) {
   if (idx === 0) return 0; // Gen 1 already at minimum (1 energy, no prev gen)
   // baseE = 10^idx, baseP = 5*idx — compute log2 directly to avoid overflow at high idx
@@ -2136,14 +2184,31 @@ function buyGenCostUpgrade(idx) {
 function genTotalUpgradeLevel(idx) { return genUpgradeLevel(idx) + genCostLevel(idx); }
 
 // Resource upgrades — Sparks (production rate) and Coins (per-milestone payout)
+// Cached the same way as gen mults (single-value caches).
 function sparksUpgradeLevel() { return getUpgradeLevel('sparks'); }
-function sparksUpgradeMult() { return Decimal.pow(2, sparksUpgradeLevel()); }
+let _sparksMultCache = D1, _sparksMultCacheLvl = -1;
+function sparksUpgradeMult() {
+  const lvl = sparksUpgradeLevel();
+  if (_sparksMultCacheLvl !== lvl) {
+    _sparksMultCache = Decimal.pow(2, lvl);
+    _sparksMultCacheLvl = lvl;
+  }
+  return _sparksMultCache;
+}
 function sparksUpgradeNextCost() { return Decimal.pow(2, sparksUpgradeLevel()); }
 function buySparksUpgrade() {
   return buyUpgrade('sparks', sparksUpgradeNextCost());
 }
 function coinsUpgradeLevel() { return getUpgradeLevel('coins'); }
-function coinsUpgradeMult() { return Decimal.pow(2, coinsUpgradeLevel()); }
+let _coinsMultCache = D1, _coinsMultCacheLvl = -1;
+function coinsUpgradeMult() {
+  const lvl = coinsUpgradeLevel();
+  if (_coinsMultCacheLvl !== lvl) {
+    _coinsMultCache = Decimal.pow(2, lvl);
+    _coinsMultCacheLvl = lvl;
+  }
+  return _coinsMultCache;
+}
 function coinsUpgradeNextCost() { return Decimal.pow(2, coinsUpgradeLevel()); }
 function buyCoinsUpgrade() {
   return buyUpgrade('coins', coinsUpgradeNextCost());
@@ -2166,6 +2231,7 @@ function checkMilestones() {
 
 function buy(idx, count) {
   ensureTier(idx);
+  const wasUnlocked = state.bought[idx].gt(0);
   if (count === 'max') {
     const m = maxAffordable(idx, buyAmountPct);
     if (m.count.lte(0)) return;
@@ -2182,6 +2248,7 @@ function buy(idx, count) {
     state.gens[idx] = state.gens[idx].add(1);
     state.bought[idx] = state.bought[idx].add(1);
   }
+  if (!wasUnlocked && state.bought[idx].gt(0) && _unlockedCount !== null) _unlockedCount++;
   pulseBadge(idx);
 }
 
@@ -2321,7 +2388,7 @@ function render() {
   const coinsPill = document.getElementById('coins-upgrade-pill');
   coinsPill.textContent = '+' + fmtInt(coinsLvl);
   coinsPill.classList.toggle('has-level', coinsLvl > 0);
-  const maxTier = state.bought.filter(b => b.gt(0)).length;
+  const maxTier = getUnlockedCount();
   const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
   if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
 
@@ -2521,6 +2588,7 @@ function loop(now) {
     simulate(dt);
     tryAutoBuy(dt);
     tryFullAuto(dt);
+    tryEqualizer(dt);
   }
   render();
   fpsFrames++;
@@ -2567,6 +2635,7 @@ modalConfirm.addEventListener('click', () => {
     localStorage.removeItem('cascade-freemode-locked');
     localStorage.removeItem('cascade-autobuy');
     localStorage.removeItem('cascade-fullauto');
+    localStorage.removeItem('cascade-equalizer');
     localStorage.removeItem('cascade-gen-cap');
     localStorage.setItem('cascade-needs-setup', '1');
   } catch(e) {}
@@ -2807,15 +2876,18 @@ function setBuyButtonStatic(labelEl, costEl, text) {
   costEl.textContent = '';
 }
 
-const UPG_VALID_AMOUNTS = [1, 10, 50, 100];
+// 0 = "buy exactly 1 level" (single-unit mode), otherwise treated as a % of max.
+const UPG_VALID_AMOUNTS = [0, 1, 10, 50, 100];
 let upgradeBuyAmountPct = parseInt(localStorage.getItem('cascade-upgrade-buy-amount') || '100', 10);
 if (!UPG_VALID_AMOUNTS.includes(upgradeBuyAmountPct)) upgradeBuyAmountPct = 100;
 
 // Compute how many upgrade levels we can buy and the total cost.
-// Cost to buy N levels starting at level L: 2^L * (2^N - 1)
-// Max N where total <= coins: N = floor(log2(1 + coins / 2^L))
-function computeUpgradeBuyPlan(currentLevel, pct, maxLvl) {
-  const nextCost = Decimal.pow(2, currentLevel);
+// Cost at level L = base × 2^L. To buy N levels starting at L: base × 2^L × (2^N − 1).
+// Max N where total ≤ coins: N = floor(log2(1 + coins / (base × 2^L))).
+// `base` defaults to 1 (used by sparks/coins). Gen upgrades pass their tier (idx+1).
+function computeUpgradeBuyPlan(currentLevel, pct, maxLvl, base) {
+  const baseD = (base && base.mul) ? base : D(base || 1);
+  const nextCost = Decimal.pow(2, currentLevel).mul(baseD);
   const coins = state.coins;
   if (coins.lt(nextCost)) return { count: D0, cost: nextCost };
 
@@ -2829,7 +2901,10 @@ function computeUpgradeBuyPlan(currentLevel, pct, maxLvl) {
   }
 
   let count = maxN;
-  if (pct != null && pct < 100) {
+  if (pct === 0) {
+    // Single-unit mode: buy exactly 1 level (if affordable and below maxLvl).
+    count = maxN.gte(1) ? D1 : D0;
+  } else if (pct != null && pct < 100) {
     count = count.mul(pct).div(100).floor();
     if (count.lt(1) && maxN.gte(1)) count = D1;
   }
@@ -2862,7 +2937,7 @@ function refreshUpgradePopover() {
     const pMult = Decimal.pow(2, pLvl);
     upgProdLevel.textContent = fmtInt(pLvl);
     upgProdMetric.textContent = fmt(pMult) + 'x';
-    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
+    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null, genUpgradeBase(ctx.idx));
     setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', pPlan.cost, pPlan.count);
     upgProdBuy.disabled = pPlan.count.lte(0);
 
@@ -2885,7 +2960,7 @@ function refreshUpgradePopover() {
       setBuyButtonStatic(upgCostBuyLabel, upgCostBuyCost, 'MAX');
       upgCostBuy.disabled = true;
     } else {
-      const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl);
+      const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl, genUpgradeBase(ctx.idx));
       setBuyButton(upgCostBuyLabel, upgCostBuyCost, 'Upgrade', cPlan.cost, cPlan.count);
       upgCostBuy.disabled = cPlan.count.lte(0);
     }
@@ -2977,7 +3052,7 @@ attachHoldBuy(upgProdBuy, () => {
   const ctx = upgradePopoverContext;
   if (!ctx) return false;
   if (ctx.type === 'gen') {
-    const plan = computeUpgradeBuyPlan(genUpgradeLevel(ctx.idx), upgradeBuyAmountPct, null);
+    const plan = computeUpgradeBuyPlan(genUpgradeLevel(ctx.idx), upgradeBuyAmountPct, null, genUpgradeBase(ctx.idx));
     return applyUpgradeBuyPlan(genUpgradeKey(ctx.idx), plan);
   }
   if (ctx.type === 'sparks') {
@@ -2995,7 +3070,7 @@ attachHoldBuy(upgCostBuy, () => {
   if (!ctx || ctx.type !== 'gen') return false;
   const cMaxLvl = genCostMaxLevel(ctx.idx);
   if (cMaxLvl === 0) return false;
-  const plan = computeUpgradeBuyPlan(genCostLevel(ctx.idx), upgradeBuyAmountPct, cMaxLvl);
+  const plan = computeUpgradeBuyPlan(genCostLevel(ctx.idx), upgradeBuyAmountPct, cMaxLvl, genUpgradeBase(ctx.idx));
   return applyUpgradeBuyPlan(genCostKey(ctx.idx), plan);
 });
 document.addEventListener('click', (e) => {
@@ -3115,6 +3190,74 @@ function tryAutoBuy(dt) {
   }
 }
 
+// Equalizer — buys gen upgrades top-down keeping every generator at the same
+// upgrade level. Won't push the top higher until everyone else has caught up.
+// Independent of the other autopilots; runs in its own loop step.
+// Stress test — one-shot: instantly grants 1 unit of generators 1 through 10,000.
+// Purely a dev/testing tool to exercise the late-game UI without grinding through
+// the early game. Skips any gen that already has bought > 0 so it doesn't overwrite
+// existing progress.
+document.getElementById('stress-test-btn').addEventListener('click', () => {
+  const TARGET = 10000;
+  ensureTier(TARGET - 1);
+  for (let i = 0; i < TARGET; i++) {
+    if (state.bought[i].lte(0)) {
+      state.bought[i] = D1;
+      if (state.gens[i].lt(1)) state.gens[i] = D1;
+    }
+  }
+  _unlockedCount = null; // recount lazily on next render
+});
+
+let equalizerEnabled = localStorage.getItem('cascade-equalizer') === '1';
+const equalizerBtn = document.getElementById('equalizer-toggle');
+function updateEqualizerUI() { equalizerBtn.classList.toggle('active', equalizerEnabled); }
+equalizerBtn.addEventListener('click', () => {
+  equalizerEnabled = !equalizerEnabled;
+  localStorage.setItem('cascade-equalizer', equalizerEnabled ? '1' : '0');
+  updateEqualizerUI();
+});
+updateEqualizerUI();
+
+let equalizerAccum = 0;
+function tryEqualizer(dt) {
+  if (!equalizerEnabled || isInSetup) return;
+  equalizerAccum += dt;
+  if (equalizerAccum < 0.1) return;
+  equalizerAccum = 0;
+
+  // Collect owned gens in top-down order
+  const owned = [];
+  for (let i = state.gens.length - 1; i >= 0; i--) {
+    if (state.bought[i] && state.bought[i].gt(0)) owned.push(i);
+  }
+  if (owned.length === 0) return;
+
+  // PRODUCTION: find the minimum upgrade level, then buy 1 on every gen at that
+  // level (top-down) while coins last. Skips any gen already above the minimum.
+  let minProdLvl = Infinity;
+  for (const idx of owned) minProdLvl = Math.min(minProdLvl, genUpgradeLevel(idx));
+  for (const idx of owned) {
+    if (genUpgradeLevel(idx) !== minProdLvl) continue;
+    const plan = computeUpgradeBuyPlan(minProdLvl, 0, null, genUpgradeBase(idx));
+    if (plan.count.lte(0)) break; // out of coins this pass
+    applyUpgradeBuyPlan(genUpgradeKey(idx), plan);
+  }
+
+  // COST REDUCTION: same equalization logic, but only on gens where reduction is available.
+  const costEligible = owned.filter(i => genCostMaxLevel(i) > 0);
+  if (costEligible.length === 0) return;
+  let minCostLvl = Infinity;
+  for (const idx of costEligible) minCostLvl = Math.min(minCostLvl, genCostLevel(idx));
+  for (const idx of costEligible) {
+    if (genCostLevel(idx) !== minCostLvl) continue;
+    if (minCostLvl >= genCostMaxLevel(idx)) continue;
+    const plan = computeUpgradeBuyPlan(minCostLvl, 0, genCostMaxLevel(idx), genUpgradeBase(idx));
+    if (plan.count.lte(0)) break;
+    applyUpgradeBuyPlan(genCostKey(idx), plan);
+  }
+}
+
 // Full autopilot — when active, plays the entire game: buys generators (next + existing)
 // AND every affordable upgrade (per-gen production, per-gen cost reduction, sparks, coins).
 // Uses the same buy-amount % as everything else. Default OFF; cleared on save reset.
@@ -3185,14 +3328,15 @@ function tryFullAuto(dt) {
     for (let i = state.gens.length - 1; i >= 0; i--) {
       if (!state.bought[i] || state.bought[i].lte(0)) continue;
 
+      const base = genUpgradeBase(i);
       const pLvl = genUpgradeLevel(i);
-      const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null);
+      const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null, base);
 
       const cMaxLvl = genCostMaxLevel(i);
       const cLvlGen = genCostLevel(i);
       const cAvailable = cMaxLvl > 0 && cLvlGen < cMaxLvl;
       const cPlanGen = cAvailable
-        ? computeUpgradeBuyPlan(cLvlGen, upgradeBuyAmountPct, cMaxLvl)
+        ? computeUpgradeBuyPlan(cLvlGen, upgradeBuyAmountPct, cMaxLvl, base)
         : { count: D0, cost: D0 };
 
       if (pPlan.count.gt(0) || cPlanGen.count.gt(0)) {
