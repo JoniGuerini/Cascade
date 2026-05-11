@@ -1698,7 +1698,7 @@ html.dark .btn-modal.danger {
       <button class="icon-btn small" id="equalizer-toggle" aria-label="Equalizer" title="Equalizer: buys gen upgrades top-down keeping every generator at the same upgrade level. Won't push the top higher until every gen has caught up.">
         <i class="ti ti-equal"></i>
       </button>
-      <button class="icon-btn small" id="stress-test-btn" aria-label="Stress test" title="Stress test: instantly grants 1 unit of generators 1 through 10,000. For testing only.">
+      <button class="icon-btn small" id="stress-test-btn" aria-label="Stress test" title="Stress test: grants 1 unit of the next 1,000 generators. Click again to keep extending. For testing only.">
         <i class="ti ti-flask"></i>
       </button>
       <label class="gen-cap" title="Stop the autopilot from unlocking generators beyond this tier. Leave empty for no cap. Upgrades, sparks, coins keep flowing.">
@@ -2581,11 +2581,29 @@ const fpsEl = document.getElementById('fps-text');
     }).catch(() => {/* permission denied or unsupported source */});
   } catch (e) { /* unavailable */ }
 })();
+// Decouple simulate rate from render rate. Render still runs every frame so the
+// UI stays smooth; simulate runs at most some Hz per second using the accumulated
+// dt. With many gens the Decimal cascade math dominates the budget, so the rate
+// scales down adaptively to keep the main thread responsive at any size:
+//   ≤ 10k gens  → 30Hz (default — visually identical to per-frame simulate)
+//   ≤ 50k gens  → 20Hz
+//   > 50k gens  → 10Hz (extreme stress-test territory)
+function currentSimulateInterval() {
+  const n = state.gens.length;
+  if (n > 50000) return 1 / 10;
+  if (n > 10000) return 1 / 20;
+  return 1 / 30;
+}
+let simulateAccum = 0;
 function loop(now) {
   const dt = Math.min((now - lastTick) / 1000, 0.1);
   lastTick = now;
   if (!isInSetup) {
-    simulate(dt);
+    simulateAccum += dt;
+    if (simulateAccum >= currentSimulateInterval()) {
+      simulate(simulateAccum);
+      simulateAccum = 0;
+    }
     tryAutoBuy(dt);
     tryFullAuto(dt);
     tryEqualizer(dt);
@@ -3198,9 +3216,16 @@ function tryAutoBuy(dt) {
 // the early game. Skips any gen that already has bought > 0 so it doesn't overwrite
 // existing progress.
 document.getElementById('stress-test-btn').addEventListener('click', () => {
-  const TARGET = 10000;
-  ensureTier(TARGET - 1);
-  for (let i = 0; i < TARGET; i++) {
+  const BATCH = 1000;
+  // Find the index right after the highest currently-unlocked tier and grant the
+  // next BATCH tiers from there. Repeated clicks keep extending: 1k → 2k → 3k…
+  let nextIdx = 0;
+  for (let i = state.bought.length - 1; i >= 0; i--) {
+    if (state.bought[i].gt(0)) { nextIdx = i + 1; break; }
+  }
+  const endIdx = nextIdx + BATCH;
+  ensureTier(endIdx - 1);
+  for (let i = nextIdx; i < endIdx; i++) {
     if (state.bought[i].lte(0)) {
       state.bought[i] = D1;
       if (state.gens[i].lt(1)) state.gens[i] = D1;
