@@ -157,7 +157,8 @@ export function energyCostFor(idx: number): Decimal {
     const k = _energyCostCache.length;
     const prev = _energyCostCache[k - 1];
     const raw = prev.mul(tierCostMultiplier(k));
-    _energyCostCache.push(raw.lt(1000) ? raw.round() : raw.floor());
+    const integer = raw.lt(1000) ? raw.add(0.5).floor() : raw.floor();
+    _energyCostCache.push(integer);
   }
   return _energyCostCache[idx];
 }
