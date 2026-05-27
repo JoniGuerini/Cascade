@@ -1,5 +1,8 @@
 import Decimal from 'break_eternity.js';
-import { D, D0, D1, SAVE_KEY } from './constants';
+import {
+  D, D0, D1, SAVE_KEY,
+  COST_MULT_BASE, COST_MULT_GROWTH, COST_MULT_NOISE, COST_PROC_SEED,
+} from './constants';
 
 export interface GameState {
   energy: Decimal;
@@ -11,6 +14,7 @@ export interface GameState {
   upgrades: Record<string, number>;
   startTime: number;
   lastSave: number;
+  lastSaveError: boolean;
 }
 
 export const state: GameState = {
@@ -23,6 +27,7 @@ export const state: GameState = {
   upgrades: {},
   startTime: Date.now(),
   lastSave: Date.now(),
+  lastSaveError: false,
 };
 
 export let isResetting = false;
@@ -116,18 +121,47 @@ export function save(scrollTop: number) {
       lastSave: state.lastSave,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(serialized));
-    const t = new Date();
-    const hh = String(t.getHours()).padStart(2, '0');
-    const mm = String(t.getMinutes()).padStart(2, '0');
-    const ss = String(t.getSeconds()).padStart(2, '0');
-    const el = document.getElementById('save-text');
-    if (el) el.textContent = `saved ${hh}:${mm}:${ss}`;
-  } catch (e) { console.error('save failed', e); }
+    state.lastSaveError = false;
+  } catch (e) {
+    state.lastSaveError = true;
+    console.error('save failed', e);
+  }
 }
 
 export interface TierInfo { name: string; produces: string; energyCost: Decimal; prevGenCost: Decimal; }
 export function nameForTier(idx: number): string { return 'Generator ' + (idx + 1); }
-export function energyCostFor(idx: number): Decimal { return Decimal.pow(10, idx); }
+
+// Deterministic mulberry32-style hash: same `idx` always returns the same value in [0,1).
+function tierRand01(idx: number): number {
+  let h = (idx + COST_PROC_SEED) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  h = (h ^ (h >>> 16)) >>> 0;
+  return h / 4294967296;
+}
+
+// Multiplier applied to go from cost(idx-1) to cost(idx). Grows slowly with idx
+// and is jittered by deterministic per-tier noise. Always > 1 so costs are monotonic.
+export function tierCostMultiplier(idx: number): number {
+  if (idx <= 0) return 1;
+  const base = COST_MULT_BASE + (idx - 1) * COST_MULT_GROWTH;
+  const noise = (tierRand01(idx) * 2 - 1) * COST_MULT_NOISE;
+  const mult = base * (1 + noise);
+  return mult < 1.1 ? 1.1 : mult;
+}
+
+const _energyCostCache: Decimal[] = [D1];
+export function energyCostFor(idx: number): Decimal {
+  if (idx < 0) return D1;
+  while (_energyCostCache.length <= idx) {
+    const k = _energyCostCache.length;
+    const prev = _energyCostCache[k - 1];
+    const raw = prev.mul(tierCostMultiplier(k));
+    _energyCostCache.push(raw.lt(1000) ? raw.round() : raw.floor());
+  }
+  return _energyCostCache[idx];
+}
+
 export function prevGenCostFor(idx: number): Decimal { return idx === 0 ? D0 : D(5 * idx); }
 export function tierInfo(idx: number): TierInfo {
   return {

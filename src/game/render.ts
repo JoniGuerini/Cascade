@@ -6,7 +6,7 @@ import {
   coinsUpgradeLevel, costOf, prevGenNeeded, freeMode,
 } from './upgrades';
 import { canAffordOne, maxAffordable, buy } from './simulate';
-import { fmt, fmtInt, fmtTier, formatElapsed } from './format';
+import { fmt, fmtInt, fmtTier, formatElapsed, formatTimeOfDay } from './format';
 import { runtime } from './runtime';
 
 const ROW_GAP = 8;
@@ -14,6 +14,8 @@ const VIRTUAL_BUFFER = 5;
 let measuredRowHeight = 66;
 let lastVisibleCount = 0;
 let lastBadgeWidth = '38px';
+let lastSaveErrorRendered: boolean | null = null;
+let lastSaveTipTs = 0;
 
 interface RowRefs {
   row: HTMLDivElement;
@@ -279,4 +281,22 @@ export function render(rowsContainer: HTMLElement, scrollEl: HTMLElement, maxTie
   const elapsedSeconds = runtime.isInSetup() ? 0 : Math.floor((Date.now() - state.startTime) / 1000);
   const elEl = document.getElementById('elapsed-text');
   if (elEl) elEl.textContent = formatElapsed(elapsedSeconds);
+
+  if (state.lastSaveError !== lastSaveErrorRendered) {
+    const saveInd = document.getElementById('save-ind');
+    const saveIcon = document.getElementById('save-icon');
+    const saveText = document.getElementById('save-text');
+    if (saveInd) saveInd.classList.toggle('error', state.lastSaveError);
+    if (saveIcon) saveIcon.className = 'ti ' + (state.lastSaveError ? 'ti-cloud-x' : 'ti-cloud-check');
+    if (saveText) saveText.textContent = state.lastSaveError ? 'save failed' : 'saved';
+    lastSaveErrorRendered = state.lastSaveError;
+  }
+  if (state.lastSave !== lastSaveTipTs) {
+    const saveInd = document.getElementById('save-ind');
+    if (saveInd) {
+      const label = state.lastSaveError ? 'Failed at ' : 'Saved at ';
+      saveInd.setAttribute('data-tip', label + formatTimeOfDay(state.lastSave));
+    }
+    lastSaveTipTs = state.lastSave;
+  }
 }

@@ -67,9 +67,13 @@ export function genCostNextCost(idx: number): Decimal {
 }
 export function genCostMaxLevel(idx: number): number {
   if (idx === 0) return 0;
-  const log2BaseE = idx * 3.321928094887362;
-  const log2BaseP = Math.log2(5 * idx);
-  return Math.ceil(Math.max(log2BaseE, log2BaseP));
+  const energy = energyCostFor(idx);
+  const log10E = energy.log10();
+  const log2BaseE = (typeof log10E === 'number' ? log10E : log10E.toNumber()) * 3.321928094887362;
+  const prevRaw = prevGenCostFor(idx).toNumber();
+  const log2BaseP = isFinite(prevRaw) && prevRaw > 1 ? Math.log2(prevRaw) : 0;
+  const maxL = Math.max(isFinite(log2BaseE) ? log2BaseE : 0, log2BaseP);
+  return Math.ceil(Math.max(0, maxL));
 }
 export function genCostAtMax(idx: number): boolean { return genCostLevel(idx) >= genCostMaxLevel(idx); }
 export function buyGenCostUpgrade(idx: number): boolean {

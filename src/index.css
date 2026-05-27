@@ -290,6 +290,53 @@ html.dark .logo-mark {
   display: flex; align-items: center; gap: 8px;
   flex-shrink: 0;
 }
+.has-tip {
+  position: relative;
+}
+.has-tip[data-tip]:not([data-tip=""])::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  background: var(--bg-card);
+  color: var(--text-1);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms ease, transform 80ms ease;
+  z-index: 1000;
+}
+.has-tip[data-tip]:not([data-tip=""])::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-card);
+  border-left: 1px solid var(--hairline);
+  border-top: 1px solid var(--hairline);
+  rotate: 45deg;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms ease, transform 80ms ease;
+  z-index: 1001;
+}
+.has-tip[data-tip]:not([data-tip=""]):hover::after,
+.has-tip[data-tip]:not([data-tip=""]):hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .play-time {
   display: inline-flex;
   align-items: center;

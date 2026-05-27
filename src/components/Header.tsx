@@ -66,8 +66,8 @@ export function Header() {
           <i className="ti ti-clock" />
           <span id="elapsed-text">0s</span>
         </span>
-        <span className="play-time" id="save-ind">
-          <i className="ti ti-cloud-check" />
+        <span className="play-time has-tip" id="save-ind" data-tip="">
+          <i id="save-icon" className="ti ti-cloud-check" />
           <span id="save-text">saved</span>
         </span>
         <button

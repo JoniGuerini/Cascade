@@ -3,6 +3,15 @@ import Decimal from 'break_eternity.js';
 export const PROD_RATE = 0.1;
 export const SPARK_RATE = 1;
 export const SAVE_KEY = 'cascade-save-v5';
+
+// Procedural energy-cost scaling.
+// Multiplier from tier N-1 to tier N: COST_MULT_BASE + (N-1) * COST_MULT_GROWTH,
+// modulated by a deterministic per-tier noise of +/- COST_MULT_NOISE.
+// Seeded so the same tier always has the same multiplier.
+export const COST_MULT_BASE = 5;
+export const COST_MULT_GROWTH = 0.1;
+export const COST_MULT_NOISE = 0.25;
+export const COST_PROC_SEED = 0xC45CADE;
 export const THEME_KEY = 'cascade-theme';
 export const ACCENT_KEY = 'cascade-accent';
 

@@ -55,6 +55,14 @@ export function fmtTier(n: number): string {
   return n.toLocaleString('pt-BR');
 }
 
+export function formatTimeOfDay(timestamp: number): string {
+  const t = new Date(timestamp);
+  const hh = String(t.getHours()).padStart(2, '0');
+  const mm = String(t.getMinutes()).padStart(2, '0');
+  const ss = String(t.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+
 export function formatElapsed(elapsed: number): string {
   const MINUTE = 60, HOUR = 3600, DAY = 86400, MONTH = 30 * DAY, YEAR = 365 * DAY;
   if (elapsed >= YEAR) {
