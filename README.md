@@ -26,35 +26,35 @@ The catch: buying a higher-tier generator **consumes** the lower-tier ones, so y
 
 ## Running locally
 
-It's a single self-contained HTML file. Just open it:
-
 ```bash
-open index.html
+npm install
+npm run dev
+# then visit http://localhost:5173
 ```
 
-Or serve it with any static HTTP server:
+Production build:
 
 ```bash
-python3 -m http.server 8000
-# then visit http://localhost:8000
+npm run build
+npm run preview
 ```
 
 ## Deploying to Vercel
 
-This is a static site with no build step, so deployment is one-click:
-
 1. Push the repo to GitHub (already configured)
 2. Go to [vercel.com/new](https://vercel.com/new) and import the repo
-3. Leave all defaults (no framework preset needed) and click Deploy
-
-Vercel will serve `index.html` at the root of your domain.
+3. Vercel auto-detects Vite. Click Deploy.
 
 ## Tech
 
-Vanilla HTML/CSS/JavaScript, no build step. Uses:
+- **Vite + React 18 + TypeScript** scaffolding
+- UI state via `useReducer + Context` (theme, accent, freeMode, autopilot flags, modals)
+- Game state and the 60 fps tick run **outside React** (in `src/game/`) to avoid per-frame reconciliation; the generator list keeps the original virtual-scrolling + direct DOM patching for perf
 - [Geist & Geist Mono](https://vercel.com/font) fonts
 - [Tabler Icons](https://tabler-icons.io/) for UI icons
 - [break_eternity.js](https://github.com/Patashu/break_eternity.js) for arbitrary-precision math
+
+The pre-migration single-file version is preserved at [`legacy-index.html`](legacy-index.html) for reference.
 
 ## License
 

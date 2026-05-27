@@ -1,0 +1,3560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cascade — Infinite generator game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/break_eternity.js@2"></script>
+<style>
+:root {
+  --bg-page: #f6f6f2;
+  --bg-card: #ffffff;
+  --bg-soft: #f1f1ec;
+  --bg-pill: #ebebe5;
+  --bg-table: #f1f1ec;
+  --btn-bg: #ffffff;
+  --bg-accent: #fff1ec;
+  --text-1: #0a0a0a;
+  --text-2: #525252;
+  --text-3: #a3a3a3;
+  --hairline: rgba(0,0,0,.06);
+  --hairline-2: rgba(0,0,0,.04);
+  --accent: #e85d39;
+  --accent-soft: rgba(232,93,57,.10);
+  --pos: #16794a;
+  --pos-bg: #e8f4ec;
+  --neg: #b91c1c;
+  --neg-bg: #fdebec;
+  --shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 1px 2px rgba(0,0,0,.06),
+    0 2px 6px rgba(0,0,0,.05),
+    0 0 0 .5px rgba(0,0,0,.14);
+  --shadow-lg:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 2px 5px rgba(0,0,0,.08),
+    0 8px 22px rgba(0,0,0,.10),
+    0 0 0 .5px rgba(0,0,0,.16);
+  --shadow-pill:
+    inset 0 1px 0 rgba(255,255,255,.7),
+    0 1px 2px rgba(0,0,0,.06),
+    0 0 0 .5px rgba(0,0,0,.12);
+  --shadow-press:
+    inset 0 1px 2px rgba(0,0,0,.1),
+    0 0 0 .5px rgba(0,0,0,.14);
+  --shadow-modal: 0 30px 80px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.1), inset 0 1px 0 #fff, 0 0 0 .5px rgba(0,0,0,.06);
+  --ring: rgba(232,93,57,.2);
+}
+html.dark {
+  --bg-page: #08080a;
+  --bg-card: #141416;
+  --bg-soft: #1c1c20;
+  --bg-pill: #232328;
+  --bg-table: #0e0e10;
+  --btn-bg: #20202a;
+  --bg-accent: #2a1612;
+  --text-1: #fafafa;
+  --text-2: #a1a1aa;
+  --text-3: #525258;
+  --hairline: rgba(255,255,255,.06);
+  --hairline-2: rgba(255,255,255,.04);
+  --accent: #ff8060;
+  --accent-soft: rgba(255,128,96,.14);
+  --pos: #5fd693;
+  --pos-bg: rgba(95,214,147,.12);
+  --neg: #f87171;
+  --neg-bg: rgba(248,113,113,.12);
+  --shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.6), 0 0 0 .5px rgba(0,0,0,.7);
+  --shadow-lg: inset 0 1px 0 rgba(255,255,255,.07), 0 6px 18px rgba(0,0,0,.5), 0 0 0 .5px rgba(0,0,0,.7);
+  --shadow-pill: inset 0 1px 0 rgba(255,255,255,.05), 0 1px 1px rgba(0,0,0,.4), 0 0 0 .5px rgba(0,0,0,.7);
+  --shadow-press: inset 0 2px 4px rgba(0,0,0,.5), 0 0 0 .5px rgba(0,0,0,.7);
+  --shadow-modal: 0 30px 80px rgba(0,0,0,.6), 0 8px 24px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07), 0 0 0 .5px rgba(0,0,0,.7);
+  --ring: rgba(255,128,96,.28);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: "ss01", "ss03", "cv11";
+  background: var(--bg-page);
+  color: var(--text-1);
+  transition: background .35s ease, color .35s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font-family: inherit; }
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: 10px;
+  gap: 10px;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .25s, background .35s;
+}
+
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  background: var(--btn-bg);
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-2);
+  border: none;
+  transition: color .15s, box-shadow .25s, transform .15s;
+}
+.icon-btn:hover { color: var(--text-1); box-shadow: var(--shadow-lg); }
+.icon-btn:active { transform: scale(.96); box-shadow: var(--shadow-press); }
+.icon-btn .ti { font-size: 17px; }
+.icon-btn.small { width: 30px; height: 30px; border-radius: 8px; }
+.icon-btn.small .ti { font-size: 15px; }
+.gen-title-actions { display: flex; align-items: center; gap: 8px; }
+
+.amount-segment {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  background: var(--btn-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 3px;
+  gap: 2px;
+  box-sizing: border-box;
+}
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  min-width: 36px;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background .15s, color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+  appearance: none;
+  letter-spacing: 0.01em;
+}
+.seg-btn:hover { color: var(--text-1); }
+.seg-btn.selected {
+  background: var(--bg-page);
+  color: var(--text-1);
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.18),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .seg-btn.selected {
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(0,0,0,.6);
+}
+.gen-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 8px 0 9px;
+  border-radius: 8px;
+  background: var(--btn-bg);
+  box-shadow: var(--shadow);
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  cursor: text;
+  box-sizing: border-box;
+}
+.gen-cap:hover { color: var(--text-1); }
+.gen-cap .ti { font-size: 13px; flex: none; }
+.gen-cap input {
+  width: 56px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+.gen-cap input::-webkit-outer-spin-button,
+.gen-cap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.gen-cap input::placeholder { color: var(--text-3); font-weight: 500; }
+
+.icon-btn.active {
+  background: var(--accent);
+  color: var(--accent-text, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 2px 5px rgba(0,0,0,.2),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+.icon-btn.active:hover { color: var(--accent-text, white); }
+html.freemode .cost-prev {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.controls-card {
+  flex: none;
+  padding: 12px 18px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.controls-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.center-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.center-group > #freemode-toggle {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+}
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.resources-card {
+  flex: none;
+  padding: 14px 18px 18px;
+  display: flex;
+  gap: 24px;
+}
+.resource { flex: 1; min-width: 0; }
+.resource + .resource { padding-left: 24px; border-left: 1px solid var(--hairline); }
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.025em;
+  min-width: 0;
+}
+.logo-mark {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: var(--text-1);
+  color: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.4),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 1px 2px rgba(0,0,0,.18),
+    0 4px 10px rgba(0,0,0,.18),
+    0 0 0 .5px rgba(0,0,0,.6);
+  transition: background .35s, color .35s, box-shadow .35s;
+  flex-shrink: 0;
+}
+html.dark .logo-mark {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.65),
+    inset 0 -1px 0 rgba(0,0,0,.2),
+    0 1px 2px rgba(0,0,0,.5),
+    0 4px 12px rgba(0,0,0,.45),
+    0 0 0 .5px rgba(0,0,0,.35);
+}
+.hero-controls {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.play-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-pill);
+  box-shadow: var(--shadow-pill);
+}
+.play-time .ti { font-size: 13px; }
+
+
+.hero-btn {
+  background: transparent; border: none;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 11px;
+  border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: color .15s, background .2s, box-shadow .2s, transform .1s;
+  white-space: nowrap;
+}
+.hero-btn:hover {
+  color: var(--neg);
+  background: var(--neg-bg);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.06),
+    0 2px 5px rgba(0,0,0,.08),
+    0 0 0 .5px rgba(0,0,0,.06);
+}
+html.dark .hero-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    inset 0 -1px 0 rgba(0,0,0,.3),
+    0 2px 6px rgba(0,0,0,.4),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.hero-btn:active { transform: scale(0.97); }
+.hero-btn .ti { font-size: 13px; }
+
+.resources-card h1 {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.res-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.resource-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.resources-card .big {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0;
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+}
+.resources-card .rate {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.resources-card .rate .num {
+  color: var(--pos);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+}
+.rate-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.gen-title-card {
+  flex: none;
+  padding: 14px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+}
+.gen-title-card h2 { font-size: 14px; font-weight: 500; margin: 0; }
+.gen-title-card p { font-size: 12px; color: var(--text-2); margin: 3px 0 0; }
+.gen-title-info { display: flex; align-items: center; gap: 14px; }
+.col-headers {
+  flex: none;
+  display: grid;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 1fr 92px 92px;
+  gap: 12px;
+  padding: 12px 20px;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.col-headers > div:nth-child(2) { text-align: center; }
+.col-headers > div:nth-child(3),
+.col-headers > div:nth-child(4),
+.col-headers > div:nth-child(5) { text-align: center; }
+.cost-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.cost-header > span { text-align: center; }
+
+.gen-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+  padding: 1px;
+  margin: -1px;
+}
+.gen-list::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+#gen-rows {
+  position: relative;
+}
+
+.gen-row {
+  display: grid;
+  grid-template-columns: var(--tier-badge-min, 38px) 1fr 1fr 1fr 1fr 1fr 92px 92px;
+  gap: 12px;
+  padding: 14px 20px;
+  align-items: center;
+  background: var(--bg-card);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s, background .35s, transform .15s;
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.gen-row:hover { box-shadow: var(--shadow-lg); }
+.gen-row > div:first-child { display: flex; align-items: center; justify-content: center; }
+
+.gen-row.is-next {
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--hairline);
+}
+.gen-row.is-next:hover { box-shadow: 0 0 0 1px var(--hairline); }
+.gen-row.is-next .tier-badge {
+  background: transparent;
+  color: var(--text-3);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.gen-row.is-next .cost-energy,
+.gen-row.is-next .cost-prev,
+.gen-row.is-next .cost-sparks { opacity: .75; }
+.gen-row.is-next .cost-energy.lacking,
+.gen-row.is-next .cost-prev.lacking,
+.gen-row.is-next .cost-sparks.lacking { opacity: 1; }
+
+.gen-row.new-tier { animation: slideUp .45s cubic-bezier(.2, .8, .2, 1); }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tier-badge {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-pill);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-1);
+  background: var(--btn-bg);
+  transition: transform .25s, background .2s, color .2s;
+  letter-spacing: 0;
+  box-sizing: border-box;
+}
+.upgrade-cell { display: flex; align-items: center; justify-content: center; }
+.upgrade-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: var(--bg-pill);
+  color: var(--text-3);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-pill);
+  transition: box-shadow .15s, color .15s, background .2s, transform .1s;
+}
+.upgrade-pill:hover { box-shadow: var(--shadow); color: var(--text-1); }
+.upgrade-pill:active { transform: scale(.96); }
+.upgrade-pill.has-level { color: var(--accent); }
+.gen-row.is-next .upgrade-pill {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.upgrade-popover {
+  position: fixed;
+  z-index: 200;
+  min-width: 320px;
+  max-width: 360px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: popoverFade .18s ease-out;
+}
+@keyframes popoverFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.upgrade-popover[hidden] { display: none; }
+.upgrade-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.upgrade-popover-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.amount-segment.upg-segment {
+  height: 26px;
+  padding: 2px;
+}
+.amount-segment.upg-segment .seg-btn {
+  height: 22px;
+  padding: 0 7px;
+  min-width: 28px;
+  font-size: 10.5px;
+}
+.upgrade-section {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: var(--shadow-pill);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.upgrade-section[hidden] { display: none; }
+.upgrade-section-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.upgrade-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.upgrade-stat {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: var(--shadow-pill);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.upgrade-stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.upgrade-stat-value {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-modal.accent.upgrade-buy {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.upgrade-buy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.upgrade-buy-cost {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.92;
+}
+.gen-row.has-owned .tier-badge { color: var(--text-1); }
+.tier-badge.pulse { animation: badgePulse .5s ease; }
+@keyframes badgePulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.gen-meta { min-width: 0; }
+.gen-name { font-weight: 500; font-size: 14px; line-height: 1.2; }
+.gen-produces {
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-top: 3px;
+  display: flex; align-items: center; gap: 4px;
+}
+.gen-produces .ti { font-size: 11px; }
+
+.gen-num {
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  font-feature-settings: 'tnum';
+  font-size: 13px;
+  text-align: center;
+}
+.gen-num.muted { color: var(--text-3); }
+.gen-num.dim { color: var(--text-2); }
+
+.cost-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+}
+.cost-group > * { text-align: center; justify-self: center; }
+.cost-energy { grid-column: 1; }
+.cost-prev { grid-column: 2; }
+.cost-sparks { grid-column: 3; }
+.cost-energy, .cost-prev, .cost-sparks {
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.cost-energy, .cost-sparks {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cost-energy { color: var(--text-1); }
+.cost-energy.muted { color: var(--text-3); }
+.cost-energy.lacking { color: var(--neg); }
+.cost-prev {
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cost-prev.muted { color: var(--text-3); }
+.cost-prev.lacking { color: var(--neg); }
+.cost-prev-tier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--btn-bg);
+  box-shadow: var(--shadow-pill);
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  box-sizing: border-box;
+}
+.cost-prev.lacking .cost-prev-tier { color: var(--neg); }
+.cost-sparks { color: var(--text-2); }
+.cost-sparks.lacking { color: var(--neg); }
+.cost-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.buy-btn {
+  padding: 8px 0;
+  font-size: 12px;
+  background: var(--btn-bg);
+  box-shadow: var(--shadow);
+  border: none;
+  border-radius: 8px;
+  color: var(--text-1);
+  cursor: pointer;
+  font-weight: 500;
+  transition: box-shadow .15s, transform .1s;
+  font-family: inherit;
+  width: 100%;
+  letter-spacing: 0.01em;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.buy-btn:hover:not(:disabled) { box-shadow: var(--shadow-lg); }
+.buy-btn:active:not(:disabled) { transform: scale(0.96); box-shadow: var(--shadow-press); }
+.buy-btn:disabled {
+  color: var(--text-3);
+  cursor: not-allowed;
+  box-shadow: var(--shadow-pill);
+  opacity: 0.7;
+}
+
+.buy-btn.afford {
+  background: var(--accent);
+  color: var(--accent-text, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 2px 5px rgba(0,0,0,.2),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .buy-btn.afford {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 2px 6px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.buy-btn.afford:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -1px 0 rgba(0,0,0,.2),
+    0 4px 14px var(--accent-glow),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .buy-btn.afford:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -1px 0 rgba(0,0,0,.42),
+    0 4px 16px var(--accent-glow),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.buy-btn.afford:active {
+  transform: scale(0.96);
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.28),
+    0 0 0 .5px rgba(0,0,0,.18);
+}
+
+.fade-in { animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) backwards; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  animation: fadeIn .2s ease;
+  padding: 20px;
+}
+.modal-backdrop[hidden] { display: none; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-modal);
+  animation: modalIn .28s cubic-bezier(.2, .8, .2, 1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: var(--neg-bg);
+  color: var(--neg);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-pill);
+}
+.modal-icon .ti { font-size: 22px; }
+
+.leaderboard-card {
+  max-width: 720px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: min(800px, 92vh);
+  overflow: hidden;
+}
+.leaderboard-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+}
+.leaderboard-head-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-text, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.4),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 4px 14px var(--accent-soft),
+    0 0 0 .5px rgba(0,0,0,.08);
+}
+.leaderboard-head-icon .ti { font-size: 22px; }
+.leaderboard-head-text h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.leaderboard-sub {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-meta-dot { opacity: 0.5; }
+.lb-close-btn { align-self: start; }
+.leaderboard-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+.lb-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color .15s, background .15s;
+}
+.lb-tab:hover { color: var(--text-1); }
+.lb-tab.selected {
+  background: var(--bg-soft);
+  color: var(--text-1);
+  box-shadow: var(--shadow-pill);
+}
+.leaderboard-yourank {
+  margin: 14px 18px 0;
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.leaderboard-yourank[hidden] { display: none; }
+.lb-yourank-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.lb-yourank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.lb-yourank-rank {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 56px;
+}
+.lb-yourank-info { flex: 1; min-width: 0; }
+.lb-yourank-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.lb-yourank-meta {
+  font-size: 11.5px;
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  margin-top: 2px;
+}
+.lb-jump {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+.leaderboard-list-head {
+  display: grid;
+  grid-template-columns: 50px 1fr 70px 90px 110px;
+  gap: 12px;
+  padding: 16px 24px 10px;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.leaderboard-list-head > div:nth-child(1) { text-align: center; }
+.leaderboard-list-head > div:nth-child(3) { text-align: center; }
+.leaderboard-list-head > div:nth-child(4),
+.leaderboard-list-head > div:nth-child(5) { text-align: right; }
+.leaderboard-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 10px;
+  background: var(--bg-table);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.leaderboard-list::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.lb-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 70px 90px 110px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .15s, transform .12s;
+}
+.lb-row:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.lb-row.you {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.lb-row.you:hover { transform: translateY(-1px); }
+.lb-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.lb-rank.top-1 {
+  color: #f59e0b;
+  font-size: 15px;
+  text-shadow: 0 0 8px rgba(245, 158, 11, .35);
+}
+.lb-rank.top-2 {
+  color: #94a3b8;
+  font-size: 14px;
+}
+.lb-rank.top-3 {
+  color: #b45309;
+  font-size: 14px;
+}
+.lb-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.lb-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-2);
+  flex: none;
+}
+.lb-row.you .lb-avatar { background: var(--accent); color: var(--accent-text, white); }
+.lb-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.lb-name .lb-you-tag {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.lb-country {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-pill);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  justify-self: center;
+}
+.lb-tier {
+  text-align: right;
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.lb-time {
+  text-align: right;
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 13px;
+  color: var(--text-2);
+}
+.leaderboard-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--hairline);
+}
+.lb-page-btn {
+  min-width: 32px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s, color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.lb-page-btn:hover:not(:disabled):not(.selected) {
+  color: var(--text-1);
+  background: var(--bg-soft);
+}
+.lb-page-btn.selected {
+  background: var(--accent);
+  color: var(--accent-text, white);
+  box-shadow: var(--shadow-pill);
+}
+.lb-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.lb-page-ellipsis {
+  padding: 0 4px;
+  color: var(--text-3);
+  font-size: 12px;
+  user-select: none;
+}
+
+.modal-card h3 {
+  font-size: 17px; font-weight: 500;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.modal-intro {
+  font-size: 13.5px;
+  color: var(--text-2);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.modal-stats {
+  list-style: none;
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  background: var(--bg-soft);
+  border-radius: 10px;
+  box-shadow: var(--shadow-pill);
+}
+.modal-stats li {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.modal-stats li .v {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-weight: 500;
+  color: var(--text-1);
+  min-width: 80px;
+}
+.modal-stats li .lbl { color: var(--text-2); font-size: 12.5px; }
+
+.modal-warning {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0 0 20px;
+  display: flex; align-items: center; gap: 5px;
+}
+.modal-warning .ti { font-size: 13px; }
+
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-modal {
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: box-shadow .15s, transform .1s;
+}
+.btn-modal.accent {
+  background: var(--accent);
+  color: var(--accent-text, white);
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 15px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 2px 5px rgba(0,0,0,.2),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .btn-modal.accent {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 2px 6px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.btn-modal.accent:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -1px 0 rgba(0,0,0,.2),
+    0 4px 14px var(--accent-glow),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+.btn-modal.accent:active { transform: scale(.98); }
+.btn-modal.accent:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.setup-icon { background: var(--accent-soft); color: var(--accent); }
+.setup-card { max-width: 600px; padding: 36px; }
+.setup-card h3 { font-size: 22px; margin: 0 0 8px; }
+.setup-card .modal-intro { font-size: 14px; margin: 0 0 24px; }
+
+.reset-card {
+  max-width: 480px;
+  padding: 36px;
+  text-align: center;
+}
+.reset-card .reset-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  margin: 0 auto 22px;
+}
+.reset-card .reset-icon .ti { font-size: 30px; }
+.reset-card h3 {
+  font-size: 26px;
+  margin: 0 0 10px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.reset-card .modal-intro {
+  font-size: 14px;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+.reset-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.reset-stat {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 18px 10px;
+  box-shadow: var(--shadow-pill);
+}
+.reset-stat-value {
+  font-family: 'Geist Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.reset-stat-label {
+  font-size: 10.5px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  margin-top: 8px;
+}
+.reset-card .modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.reset-card .btn-modal {
+  flex: 1;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.mode-card {
+  background: var(--bg-soft);
+  border: none;
+  border-radius: 14px;
+  padding: 22px 20px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-1);
+  box-shadow: var(--shadow-pill);
+  transition: box-shadow .2s, transform .1s, background .2s, color .2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.mode-card:hover { box-shadow: var(--shadow-lg); }
+.mode-card:active { transform: scale(.98); }
+.mode-card .mode-name {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+.mode-card .mode-desc {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.mode-card.selected {
+  background: var(--accent);
+  color: var(--accent-text, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(0,0,0,.18),
+    0 4px 14px var(--accent-glow),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .mode-card.selected {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 4px 16px var(--accent-glow),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.mode-card.selected .mode-desc { color: var(--accent-text-soft, rgba(255,255,255,.85)); }
+.setup-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  background: var(--bg-soft);
+  border-radius: 14px;
+  box-shadow: var(--shadow-pill);
+  margin-bottom: 24px;
+}
+.setup-text { flex: 1; min-width: 0; }
+.setup-name {
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.setup-tag {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.setup-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.setup-desc strong { color: var(--text-1); font-weight: 500; }
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-pill);
+  border-radius: 22px;
+  box-shadow: var(--shadow-pill);
+  transition: background .2s;
+}
+.slider::before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform .2s;
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(16px); }
+
+.icon-btn:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.icon-btn:disabled:not(.active) { opacity: 0.35; }
+
+.palette-wrap { position: relative; }
+.palette-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 50;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 14px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: paletteFade .18s cubic-bezier(.2, .8, .2, 1);
+}
+.palette-section { display: flex; flex-direction: column; gap: 8px; }
+.palette-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.palette-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.palette-popover[hidden] { display: none; }
+@keyframes paletteFade {
+  from { opacity: 0; transform: translateY(-4px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  padding: 0;
+  background: var(--c);
+  cursor: pointer;
+  box-shadow: var(--shadow-pill);
+  transition: transform .12s, box-shadow .15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.swatch:hover { transform: scale(1.1); }
+.swatch.selected {
+  box-shadow:
+    0 0 0 2px var(--bg-card),
+    0 0 0 4px var(--c),
+    var(--shadow-pill);
+}
+html.dark .swatch[data-accent="black"] { display: none; }
+html:not(.dark) .swatch[data-accent="white"] { display: none; }
+
+.btn-modal.cancel {
+  background: var(--btn-bg);
+  color: var(--text-1);
+  box-shadow: var(--shadow);
+}
+.btn-modal.cancel:hover { box-shadow: var(--shadow-lg); }
+.btn-modal.cancel:active { transform: scale(.97); box-shadow: var(--shadow-press); }
+.btn-modal.danger {
+  background: var(--neg);
+  color: white;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.28),
+    inset 0 -1px 0 rgba(0,0,0,.2),
+    0 2px 5px rgba(0,0,0,.2),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+html.dark .btn-modal.danger {
+  background: #b91c1c;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    inset 0 -1px 0 rgba(0,0,0,.4),
+    0 2px 6px rgba(0,0,0,.5),
+    0 0 0 .5px rgba(0,0,0,.4);
+}
+.btn-modal.danger:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(0,0,0,.22),
+    0 4px 14px rgba(185,28,28,.4),
+    0 0 0 .5px rgba(0,0,0,.12);
+}
+.btn-modal.danger:active {
+  transform: scale(.97);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.3), 0 0 0 .5px rgba(0,0,0,.18);
+}
+
+@media (max-width: 720px) {
+  .controls-card { padding: 10px 14px; }
+  .resources-card { padding: 14px 16px; }
+  .resources-card .big { font-size: 28px; }
+  .play-time span:not(.ti) { display: none; }
+  .play-time .ti { font-size: 14px; }
+  .hero-btn span { display: none; }
+  .hero-btn { padding: 8px; }
+  .hero-btn .ti { font-size: 14px; }
+  .col-headers, .gen-row {
+    grid-template-columns: 36px auto 1fr 70px 76px;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  /* Mobile: hide Rate (4), Milestones (5), and the trailing buy column */
+  .col-headers > div:nth-child(4),
+  .col-headers > div:nth-child(5),
+  .col-headers > div:nth-child(8),
+  .gen-row > div:nth-child(4),
+  .gen-row > div:nth-child(5),
+  .gen-row > div:nth-child(8) { display: none; }
+  .tier-badge { width: 32px; height: 32px; font-size: 11px; }
+  .gen-num { font-size: 12px; }
+  .buy-btn { font-size: 11px; padding: 7px 4px; }
+  .gen-title-card { padding: 12px 14px; }
+  .col-headers { padding: 10px 14px; }
+  .modal-card { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="card controls-card fade-in">
+    <div class="logo">
+      <div class="logo-mark">C</div>
+      <span>Cascade</span>
+    </div>
+    <div class="controls-center">
+      <div class="center-group">
+      <button class="icon-btn" id="freemode-toggle" aria-label="Easy mode active">
+        <i class="ti ti-bolt"></i>
+      </button>
+      <div class="palette-wrap">
+        <button class="icon-btn" id="palette-toggle" aria-label="Choose accent color">
+          <i class="ti ti-palette"></i>
+        </button>
+        <div class="palette-popover" id="palette-popover" hidden>
+          <div class="palette-section">
+            <div class="palette-label">Colors</div>
+            <div class="palette-grid">
+              <button class="swatch" data-accent="salmon"  style="--c:#e85d39"></button>
+              <button class="swatch" data-accent="red"     style="--c:#dc2626"></button>
+              <button class="swatch" data-accent="maroon"  style="--c:#7f1d1d"></button>
+              <button class="swatch" data-accent="amber"   style="--c:#d97706"></button>
+              <button class="swatch" data-accent="yellow"  style="--c:#ca8a04"></button>
+              <button class="swatch" data-accent="brown"   style="--c:#7c4a1e"></button>
+              <button class="swatch" data-accent="olive"   style="--c:#4d7c0f"></button>
+              <button class="swatch" data-accent="lime"    style="--c:#65a30d"></button>
+              <button class="swatch" data-accent="teal"    style="--c:#0d9488"></button>
+              <button class="swatch" data-accent="blue"    style="--c:#2563eb"></button>
+              <button class="swatch" data-accent="indigo"  style="--c:#4338ca"></button>
+              <button class="swatch" data-accent="purple"  style="--c:#9333ea"></button>
+              <button class="swatch" data-accent="magenta" style="--c:#a21caf"></button>
+              <button class="swatch" data-accent="pink"    style="--c:#db2777"></button>
+            </div>
+          </div>
+          <div class="palette-section">
+            <div class="palette-label">Neutrals</div>
+            <div class="palette-grid">
+              <button class="swatch" data-accent="slate"   style="--c:#475569"></button>
+              <button class="swatch" data-accent="black"   style="--c:#0a0a0a"></button>
+              <button class="swatch" data-accent="white"   style="--c:#fafafa"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="icon-btn" id="theme-toggle" aria-label="Toggle theme">
+        <i class="ti ti-sun" id="theme-icon"></i>
+      </button>
+      </div>
+    </div>
+    <div class="controls-right">
+      <span class="play-time">
+        <i class="ti ti-activity"></i>
+        <span id="fps-text">— fps</span>
+      </span>
+      <span class="play-time" id="cpu-ind" hidden title="System pressure (Compute Pressure API)">
+        <i class="ti ti-cpu"></i>
+        <span id="cpu-text">—</span>
+      </span>
+      <span class="play-time">
+        <i class="ti ti-clock"></i>
+        <span id="elapsed-text">0s</span>
+      </span>
+      <span class="play-time" id="save-ind">
+        <i class="ti ti-cloud-check"></i>
+        <span id="save-text">saved</span>
+      </span>
+      <button class="hero-btn" id="leaderboard-btn" aria-label="Leaderboard">
+        <i class="ti ti-trophy"></i>
+        <span>Leaderboard</span>
+      </button>
+      <button class="hero-btn" id="reset" aria-label="Reset progress">
+        <i class="ti ti-refresh"></i>
+        <span>Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card resources-card fade-in" style="animation-delay:.04s">
+    <div class="resource">
+      <h1>
+        <svg class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" shape-rendering="geometricPrecision">
+          <path d="M10 1 L3 9 L7 9 L6 15 L13 7 L9 7 Z"/>
+        </svg>
+        Energy
+      </h1>
+      <p class="big" id="energy">1</p>
+      <p class="rate"><span class="num" id="rate">+0</span> per second</p>
+    </div>
+    <div class="resource">
+      <div class="resource-head">
+        <h1>
+          <svg class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" shape-rendering="geometricPrecision">
+            <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z"/>
+          </svg>
+          Sparks
+        </h1>
+        <button type="button" class="upgrade-pill" id="sparks-upgrade-pill" title="Upgrade sparks production">+0</button>
+      </div>
+      <p class="big" id="sparks">1</p>
+      <p class="rate"><span class="num" id="spark-rate">+0</span> per second</p>
+    </div>
+    <div class="resource">
+      <div class="resource-head">
+        <h1>
+          <svg class="res-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" shape-rendering="geometricPrecision">
+            <circle cx="8" cy="8" r="6"/>
+          </svg>
+          Coins
+        </h1>
+        <button type="button" class="upgrade-pill" id="coins-upgrade-pill" title="Upgrade coins per milestone">+0</button>
+      </div>
+      <p class="big" id="coins">0</p>
+      <p class="rate-hint">milestone rewards</p>
+    </div>
+  </div>
+
+  <div class="card gen-title-card fade-in" style="animation-delay:.08s">
+    <div class="gen-title-info">
+      <div class="tier-badge" id="max-tier-text">—</div>
+      <div>
+        <h2>Generators</h2>
+        <p>Each tier produces the previous one — buy one to unlock the next</p>
+      </div>
+    </div>
+    <div class="gen-title-actions">
+      <div class="amount-segment" id="amount-segment">
+        <button class="seg-btn" data-amt="1">1%</button>
+        <button class="seg-btn" data-amt="10">10%</button>
+        <button class="seg-btn" data-amt="50">50%</button>
+        <button class="seg-btn selected" data-amt="100">Max</button>
+      </div>
+      <button class="icon-btn small" id="autobuy-toggle" aria-label="Auto-buy" title="Auto-buy: keeps unlocking the next generator (uses the selected % amount)">
+        <i class="ti ti-bolt"></i>
+      </button>
+      <button class="icon-btn small" id="fullauto-toggle" aria-label="Full autopilot" title="Full autopilot: buys generators (next + existing) AND every affordable upgrade (gen, sparks, coins). Uses the selected % amount.">
+        <i class="ti ti-robot"></i>
+      </button>
+      <button class="icon-btn small" id="equalizer-toggle" aria-label="Equalizer" title="Equalizer: buys gen upgrades bottom-up keeping every generator at the same upgrade level. Cheap tiers first so coins are spread across as many gens as possible.">
+        <i class="ti ti-equal"></i>
+      </button>
+      <button class="icon-btn small" id="stress-test-btn" aria-label="Stress test" title="Stress test: grants 1 unit of the next 1,000 generators. Click again to keep extending. For testing only.">
+        <i class="ti ti-flask"></i>
+      </button>
+      <label class="gen-cap" title="Stop the autopilot from unlocking generators beyond this tier. Leave empty for no cap. Upgrades, sparks, coins keep flowing.">
+        <i class="ti ti-arrow-bar-to-up"></i>
+        <input type="number" id="gen-cap-input" placeholder="∞" min="1" inputmode="numeric">
+      </label>
+      <button class="icon-btn small" id="scroll-top" aria-label="Scroll to top">
+        <i class="ti ti-arrow-bar-to-up"></i>
+      </button>
+      <button class="icon-btn small" id="scroll-bottom" aria-label="Scroll to bottom">
+        <i class="ti ti-arrow-bar-to-down"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card col-headers fade-in" style="animation-delay:.12s">
+    <div>Tier</div>
+    <div>Lv</div>
+    <div>Owned</div>
+    <div>Rate</div>
+    <div>Milestones</div>
+    <div class="cost-header"><span>Cost</span></div>
+    <div></div>
+    <div></div>
+  </div>
+
+  <div class="gen-list fade-in" id="gen-scroll" style="animation-delay:.16s">
+    <div id="gen-rows"></div>
+  </div>
+
+</div>
+
+<div class="upgrade-popover" id="upgrade-popover" hidden>
+  <div class="upgrade-popover-header">
+    <div class="upgrade-popover-title" id="upg-title">—</div>
+    <div class="amount-segment upg-segment" id="upg-amount-segment">
+      <button class="seg-btn" data-amt="0">1</button>
+      <button class="seg-btn" data-amt="1">1%</button>
+      <button class="seg-btn" data-amt="10">10%</button>
+      <button class="seg-btn" data-amt="50">50%</button>
+      <button class="seg-btn selected" data-amt="100">Max</button>
+    </div>
+  </div>
+
+  <div class="upgrade-section">
+    <div class="upgrade-section-name" id="upg-prod-name">Production</div>
+    <div class="upgrade-stat-grid">
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label">Level</div>
+        <div class="upgrade-stat-value" id="upg-prod-level">0</div>
+      </div>
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label" id="upg-prod-metric-label">Multiplier</div>
+        <div class="upgrade-stat-value" id="upg-prod-metric">1x</div>
+      </div>
+    </div>
+    <button class="btn-modal accent upgrade-buy" id="upg-prod-buy">
+      <span class="upgrade-buy-label" id="upg-prod-buy-label">Upgrade</span>
+      <span class="upgrade-buy-cost" id="upg-prod-buy-cost">1 coin</span>
+    </button>
+  </div>
+
+  <div class="upgrade-section" id="upg-cost-section">
+    <div class="upgrade-section-name">Cost reduction</div>
+    <div class="upgrade-stat-grid">
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label">Level</div>
+        <div class="upgrade-stat-value" id="upg-cost-level">0</div>
+      </div>
+      <div class="upgrade-stat">
+        <div class="upgrade-stat-label">Cost factor</div>
+        <div class="upgrade-stat-value" id="upg-cost-metric">100%</div>
+      </div>
+    </div>
+    <button class="btn-modal accent upgrade-buy" id="upg-cost-buy">
+      <span class="upgrade-buy-label" id="upg-cost-buy-label">Upgrade</span>
+      <span class="upgrade-buy-cost" id="upg-cost-buy-cost">1 coin</span>
+    </button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="setup-modal" hidden>
+  <div class="modal-card setup-card">
+    <div class="modal-icon setup-icon">
+      <i class="ti ti-sparkles"></i>
+    </div>
+    <h3>Customize your run</h3>
+    <p class="modal-intro">Pick a game mode — your choice is final for this run.</p>
+    <div class="mode-grid">
+      <button type="button" class="mode-card" data-mode="normal">
+        <div class="mode-name">Normal</div>
+        <div class="mode-desc">Buying a generator consumes units of the previous tier. The full cascade challenge.</div>
+      </button>
+      <button type="button" class="mode-card" data-mode="easy">
+        <div class="mode-name">Easy</div>
+        <div class="mode-desc">Skip the previous-tier requirement. Energy alone unlocks any tier.</div>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal accent" id="setup-start">Start playing</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal-card reset-card">
+    <div class="modal-icon reset-icon">
+      <i class="ti ti-alert-triangle"></i>
+    </div>
+    <h3>Reset progress?</h3>
+    <p class="modal-intro">All progress from this run will be permanently lost.</p>
+    <div class="reset-stats-grid">
+      <div class="reset-stat">
+        <div class="reset-stat-value" id="reset-energy">—</div>
+        <div class="reset-stat-label">Energy</div>
+      </div>
+      <div class="reset-stat">
+        <div class="reset-stat-value" id="reset-gens">—</div>
+        <div class="reset-stat-label">Generators</div>
+      </div>
+      <div class="reset-stat">
+        <div class="reset-stat-value" id="reset-time">—</div>
+        <div class="reset-stat-label">Play time</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal cancel" id="modal-cancel">Cancel</button>
+      <button class="btn-modal danger" id="modal-confirm">Reset everything</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop leaderboard-backdrop" id="leaderboard-modal" hidden>
+  <div class="modal-card leaderboard-card">
+    <div class="leaderboard-head">
+      <div class="leaderboard-head-icon">
+        <i class="ti ti-trophy"></i>
+      </div>
+      <div class="leaderboard-head-text">
+        <h3>Global Leaderboard</h3>
+        <p class="leaderboard-sub">
+          <span id="lb-meta-count">— players</span>
+          <span class="lb-meta-dot">·</span>
+          <span id="lb-meta-updated">updated just now</span>
+        </p>
+      </div>
+      <button class="icon-btn small lb-close-btn" id="leaderboard-close" aria-label="Close">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+    <div class="leaderboard-tabs">
+      <button class="lb-tab selected" data-tab="all-time">All time</button>
+      <button class="lb-tab" data-tab="month">Last 30 days</button>
+      <button class="lb-tab" data-tab="week">This week</button>
+    </div>
+    <div class="leaderboard-yourank" id="lb-yourank" hidden>
+      <div class="lb-yourank-label">Your rank</div>
+      <div class="lb-yourank-row">
+        <div class="lb-yourank-rank" id="lb-yourank-rank">—</div>
+        <div class="lb-yourank-info">
+          <div class="lb-yourank-name" id="lb-yourank-name">—</div>
+          <div class="lb-yourank-meta">
+            Tier <span id="lb-yourank-tier">—</span> · <span id="lb-yourank-time">—</span>
+          </div>
+        </div>
+        <button class="btn-modal cancel lb-jump" id="lb-jump-btn">Jump to me</button>
+      </div>
+    </div>
+    <div class="leaderboard-list-head">
+      <div>#</div>
+      <div>Player</div>
+      <div>Country</div>
+      <div>Tier</div>
+      <div>Time</div>
+    </div>
+    <div class="leaderboard-list" id="leaderboard-list"></div>
+    <div class="leaderboard-pagination" id="leaderboard-pagination"></div>
+  </div>
+</div>
+
+<script>
+const PROD_RATE = 0.1;
+const SPARK_RATE = 1; // sparks per second once Gen 1 is unlocked
+const SAVE_KEY = 'cascade-save-v5';
+const D = (v) => new Decimal(v);
+const D0 = D(0);
+const D1 = D(1);
+const THEME_KEY = 'cascade-theme';
+
+function nameForTier(idx) {
+  return 'Generator ' + (idx + 1);
+}
+
+function energyCostFor(idx) {
+  return Decimal.pow(10, idx);
+}
+function prevGenCostFor(idx) {
+  return idx === 0 ? D0 : D(5 * idx);
+}
+
+function tierInfo(idx) {
+  return {
+    name: nameForTier(idx),
+    produces: idx === 0 ? 'Energy' : nameForTier(idx - 1),
+    energyCost: energyCostFor(idx),
+    prevGenCost: prevGenCostFor(idx),
+  };
+}
+
+let isResetting = false;
+let isInSetup = localStorage.getItem('cascade-needs-setup') === '1';
+let pendingScrollTop = 0;
+
+let state = {
+  energy: D1,
+  sparks: D1,
+  coins: D0,
+  gens: [D0],
+  bought: [D0],
+  milestonesClaimed: [D0],
+  upgrades: {},
+  startTime: Date.now(),
+  lastSave: Date.now(),
+};
+
+const saved = localStorage.getItem(SAVE_KEY);
+if (saved) {
+  try {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed.gens) && Array.isArray(parsed.bought)) {
+      const safeFinite = (v, fallback) => (v && v.isFinite && v.isFinite()) ? v : fallback;
+      state.energy = safeFinite(parsed.energy != null ? D(parsed.energy) : D1, D1);
+      state.sparks = safeFinite(parsed.sparks != null ? D(parsed.sparks) : D1, D1);
+      state.coins = safeFinite(parsed.coins != null ? D(parsed.coins) : D0, D0);
+      state.gens = parsed.gens.map(g => safeFinite(D(g), D0));
+      state.bought = parsed.bought.map(b => safeFinite(D(b), D0));
+      state.milestonesClaimed = Array.isArray(parsed.milestonesClaimed)
+        ? parsed.milestonesClaimed.map(m => safeFinite(D(m), D0))
+        : [];
+      state.upgrades = (parsed.upgrades && typeof parsed.upgrades === 'object') ? parsed.upgrades : {};
+      pendingScrollTop = typeof parsed.scrollTop === 'number' ? parsed.scrollTop : 0;
+      while (state.gens.length < state.bought.length) state.gens.push(D0);
+      while (state.bought.length < state.gens.length) state.bought.push(D0);
+      while (state.milestonesClaimed.length < state.gens.length) state.milestonesClaimed.push(D0);
+      state.startTime = parsed.startTime || Date.now();
+      state.lastSave = parsed.lastSave || Date.now();
+      const offlineMs = Math.max(0, Date.now() - state.lastSave);
+      if (offlineMs > 1000 && !isInSetup) simulate(offlineMs / 1000);
+    }
+  } catch(e) { console.error('save load failed', e); }
+}
+
+function ensureTier(idx) {
+  while (state.gens.length <= idx) {
+    state.gens.push(D0);
+    state.bought.push(D0);
+    state.milestonesClaimed.push(D0);
+  }
+}
+
+// Incrementally tracked count of tiers with bought > 0. Avoids a full filter
+// pass through state.bought every render frame. Invalidate (set to null) on
+// load/reset; bump from inside buy() when a tier flips from 0 → >0.
+let _unlockedCount = null;
+function getUnlockedCount() {
+  if (_unlockedCount !== null) return _unlockedCount;
+  let count = 0;
+  for (let i = 0; i < state.bought.length; i++) {
+    if (state.bought[i].gt(0)) count++;
+  }
+  _unlockedCount = count;
+  return count;
+}
+
+const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No'];
+
+function letterSuffix(idx) {
+  // 0='aa', 1='ab'... 25='az', 26='ba'... 675='zz', 676='aaa'... 18251='zzz', 18252='aaaa'...
+  let len = 2;
+  let block = 26 * 26;
+  let i = idx;
+  while (i >= block) {
+    i -= block;
+    len++;
+    block *= 26;
+  }
+  let result = '';
+  for (let j = 0; j < len; j++) {
+    result = String.fromCharCode(97 + (i % 26)) + result;
+    i = Math.floor(i / 26);
+  }
+  return result;
+}
+
+function fmt(n) {
+  if (n == null) return '0';
+  if (typeof n === 'number') n = D(n);
+  if (!n.isFinite()) return '∞';
+  if (n.lt(0.01)) return '0';
+  if (n.lt(1000)) {
+    const v = n.toNumber();
+    if (v < 10) return v.toFixed(2);
+    if (v < 100) return v.toFixed(1);
+    return Math.floor(v).toString();
+  }
+  const log = n.log10();
+  let tierD = log.div(3).floor();
+  // Mantissa via Decimal division — exact for any magnitude break_eternity supports.
+  let mantissa = n.div(Decimal.pow(10, tierD.mul(3))).toNumber();
+  if (!isFinite(mantissa)) return n.toString();
+  // Float-rounding correction: when log10 precision drift makes tier off by one,
+  // mantissa lands at exactly 1000 (or close enough that toFixed(2) rounds to "1000.00").
+  // Bump the tier and renormalize so the suffix advances instead of showing 1000.
+  if (mantissa >= 999.995) {
+    mantissa /= 1000;
+    tierD = tierD.add(1);
+  }
+  const tier = tierD.toNumber();
+  // Only fall back to library's scientific notation when tier exceeds what JS can
+  // hold as a finite integer (true tetration territory). Letter suffixes grow
+  // dynamically — 2-letter, 3-letter, … as far as the input demands.
+  if (!isFinite(tier)) return n.toString();
+  const suffix = tier < SUFFIXES.length ? SUFFIXES[tier] : letterSuffix(tier - SUFFIXES.length);
+  const numStr = mantissa.toFixed(2);
+  return suffix ? numStr + ' ' + suffix : numStr;
+}
+
+function fmtInt(n) {
+  if (typeof n === 'number') n = D(n);
+  if (n.lt(1000)) return Math.floor(n.toNumber()).toString();
+  return fmt(n);
+}
+
+function fmtTier(n) {
+  return n.toLocaleString('pt-BR');
+}
+
+function costOf(idx) {
+  ensureTier(idx);
+  const base = energyCostFor(idx);
+  const lvl = genCostLevel(idx);
+  if (lvl === 0) return base;
+  const reduced = base.mul(Decimal.pow(0.5, lvl));
+  return reduced.lt(1) ? D1 : reduced.floor();
+}
+function prevGenNeeded(idx) {
+  ensureTier(idx);
+  const base = prevGenCostFor(idx);
+  if (base.lte(0)) return base;
+  const lvl = genCostLevel(idx);
+  if (lvl === 0) return base;
+  const reduced = base.mul(Decimal.pow(0.5, lvl));
+  return reduced.lt(1) ? D1 : reduced.floor();
+}
+let freeMode = localStorage.getItem('cascade-freemode') === '1';
+
+function canAffordOne(idx) {
+  const e = costOf(idx);
+  const p = prevGenNeeded(idx);
+  if (state.energy.lt(e)) return false;
+  if (state.sparks.lt(1)) return false;
+  if (!freeMode && idx > 0 && (state.gens[idx - 1] || D0).lt(p)) return false;
+  return true;
+}
+
+function maxAffordable(idx, pct) {
+  const e = costOf(idx);
+  const p = prevGenNeeded(idx);
+  const maxByEnergy = state.energy.div(e).floor();
+  const maxBySparks = state.sparks.floor();
+  let maxByPrev = null;
+  if (!freeMode && idx > 0 && p.gt(0)) {
+    maxByPrev = (state.gens[idx - 1] || D0).div(p).floor();
+  }
+  let count = maxByEnergy;
+  if (maxBySparks.lt(count)) count = maxBySparks;
+  if (maxByPrev !== null && maxByPrev.lt(count)) count = maxByPrev;
+  if (count.lt(0)) count = D0;
+  if (pct != null && pct < 100) {
+    count = count.mul(pct).div(100).floor();
+  }
+  return { count, energyCost: count.mul(e), prevCost: count.mul(p), sparkCost: count };
+}
+
+let _milestoneAccum = 0;
+function simulate(dt) {
+  // Pre-create the per-frame factor as a Decimal once (instead of as a JS number
+  // that break_eternity would re-wrap for every multiplication inside the loop).
+  const factorD = D(PROD_RATE * dt);
+  const n = state.gens.length;
+  for (let i = n - 1; i > 0; i--) {
+    const g = state.gens[i];
+    if (g.sign === 0) continue; // nothing to cascade from this tier
+    state.gens[i - 1] = state.gens[i - 1].add(g.mul(genUpgradeMult(i)).mul(factorD));
+  }
+  if (state.gens[0].sign !== 0) {
+    state.energy = state.energy.add(state.gens[0].mul(genUpgradeMult(0)).mul(factorD));
+  }
+  if (state.bought[0] && state.bought[0].gt(0)) {
+    state.sparks = state.sparks.add(sparksUpgradeMult().mul(SPARK_RATE * dt));
+  }
+  // Throttle milestone scanning to ~2 Hz — it walks every gen and does log10 work,
+  // and the milestone payout doesn't need sub-second precision.
+  _milestoneAccum += dt;
+  if (_milestoneAccum >= 0.5) {
+    _milestoneAccum = 0;
+    checkMilestones();
+  }
+}
+
+// Coins API — use these to spend/check the milestone currency for upgrades
+function canAffordCoins(amount) {
+  const cost = (amount && amount.gte) ? amount : D(amount);
+  return state.coins.gte(cost);
+}
+function spendCoins(amount) {
+  const cost = (amount && amount.gte) ? amount : D(amount);
+  if (!state.coins.gte(cost)) return false;
+  state.coins = state.coins.sub(cost);
+  return true;
+}
+function addCoins(amount) {
+  const inc = (amount && amount.gte) ? amount : D(amount);
+  state.coins = state.coins.add(inc);
+}
+
+// Upgrades API — state.upgrades stores { [upgradeId]: level }
+function getUpgradeLevel(id) {
+  return state.upgrades[id] || 0;
+}
+function setUpgradeLevel(id, level) {
+  if (level <= 0) delete state.upgrades[id];
+  else state.upgrades[id] = level;
+}
+function buyUpgrade(id, cost) {
+  if (!spendCoins(cost)) return false;
+  setUpgradeLevel(id, getUpgradeLevel(id) + 1);
+  return true;
+}
+
+// Per-generator upgrades (production + cost reduction)
+function genUpgradeKey(idx) { return 'gen-' + idx; }
+function genUpgradeLevel(idx) { return getUpgradeLevel(genUpgradeKey(idx)); }
+// Cache: avoid re-doing Decimal.pow(2, lvl) every frame for each gen. Invalidates
+// automatically when the cached upgrade level no longer matches the live level.
+const _genUpgradeMultCache = [];
+const _genUpgradeMultCacheLvl = [];
+function genUpgradeMult(idx) {
+  const lvl = genUpgradeLevel(idx);
+  if (_genUpgradeMultCacheLvl[idx] !== lvl) {
+    _genUpgradeMultCache[idx] = Decimal.pow(2, lvl);
+    _genUpgradeMultCacheLvl[idx] = lvl;
+  }
+  return _genUpgradeMultCache[idx];
+}
+// Gen upgrades use tier as the cost base: gen 1 → base 1, gen 2 → base 2, …
+// Cost at level L = base × 2^L, so the cost ramp scales with how deep the gen is.
+function genUpgradeBase(idx) { return D(idx + 1); }
+function genUpgradeNextCost(idx) { return Decimal.pow(2, genUpgradeLevel(idx)).mul(genUpgradeBase(idx)); }
+function buyGenUpgrade(idx) {
+  return buyUpgrade(genUpgradeKey(idx), genUpgradeNextCost(idx));
+}
+
+// Cost reduction upgrade — halves both energy and prev gen costs each level, clamped to min 1
+function genCostKey(idx) { return 'gen-' + idx + '-cost'; }
+function genCostLevel(idx) { return getUpgradeLevel(genCostKey(idx)); }
+function genCostMult(idx) { return Decimal.pow(0.5, genCostLevel(idx)); }
+function genCostNextCost(idx) { return Decimal.pow(2, genCostLevel(idx)).mul(genUpgradeBase(idx)); }
+function genCostMaxLevel(idx) {
+  if (idx === 0) return 0; // Gen 1 already at minimum (1 energy, no prev gen)
+  // baseE = 10^idx, baseP = 5*idx — compute log2 directly to avoid overflow at high idx
+  const log2BaseE = idx * 3.321928094887362; // log2(10) ≈ 3.3219
+  const log2BaseP = Math.log2(5 * idx);
+  return Math.ceil(Math.max(log2BaseE, log2BaseP));
+}
+function genCostAtMax(idx) { return genCostLevel(idx) >= genCostMaxLevel(idx); }
+function buyGenCostUpgrade(idx) {
+  if (genCostAtMax(idx)) return false;
+  return buyUpgrade(genCostKey(idx), genCostNextCost(idx));
+}
+
+// Total upgrade level shown in Lv column = production + cost reduction
+function genTotalUpgradeLevel(idx) { return genUpgradeLevel(idx) + genCostLevel(idx); }
+
+// Resource upgrades — Sparks (production rate) and Coins (per-milestone payout)
+// Cached the same way as gen mults (single-value caches).
+function sparksUpgradeLevel() { return getUpgradeLevel('sparks'); }
+let _sparksMultCache = D1, _sparksMultCacheLvl = -1;
+function sparksUpgradeMult() {
+  const lvl = sparksUpgradeLevel();
+  if (_sparksMultCacheLvl !== lvl) {
+    _sparksMultCache = Decimal.pow(2, lvl);
+    _sparksMultCacheLvl = lvl;
+  }
+  return _sparksMultCache;
+}
+function sparksUpgradeNextCost() { return Decimal.pow(2, sparksUpgradeLevel()); }
+function buySparksUpgrade() {
+  return buyUpgrade('sparks', sparksUpgradeNextCost());
+}
+function coinsUpgradeLevel() { return getUpgradeLevel('coins'); }
+let _coinsMultCache = D1, _coinsMultCacheLvl = -1;
+function coinsUpgradeMult() {
+  const lvl = coinsUpgradeLevel();
+  if (_coinsMultCacheLvl !== lvl) {
+    _coinsMultCache = Decimal.pow(2, lvl);
+    _coinsMultCacheLvl = lvl;
+  }
+  return _coinsMultCache;
+}
+function coinsUpgradeNextCost() { return Decimal.pow(2, coinsUpgradeLevel()); }
+function buyCoinsUpgrade() {
+  return buyUpgrade('coins', coinsUpgradeNextCost());
+}
+
+function checkMilestones() {
+  for (let i = 0; i < state.gens.length; i++) {
+    const gen = state.gens[i];
+    if (!gen || gen.lt(10) || !gen.isFinite()) continue;
+    const claimedNow = gen.log10().floor();
+    if (!claimedNow.isFinite()) continue;
+    const claimed = state.milestonesClaimed[i] || D0;
+    if (claimedNow.gt(claimed)) {
+      const diff = claimedNow.sub(claimed);
+      state.coins = state.coins.add(coinsUpgradeMult().mul(diff));
+      state.milestonesClaimed[i] = claimedNow;
+    }
+  }
+}
+
+function buy(idx, count) {
+  ensureTier(idx);
+  const wasUnlocked = state.bought[idx].gt(0);
+  if (count === 'max') {
+    const m = maxAffordable(idx, buyAmountPct);
+    if (m.count.lte(0)) return;
+    state.energy = state.energy.sub(m.energyCost);
+    state.sparks = state.sparks.sub(m.sparkCost);
+    if (!freeMode && idx > 0) state.gens[idx - 1] = state.gens[idx - 1].sub(m.prevCost);
+    state.gens[idx] = state.gens[idx].add(m.count);
+    state.bought[idx] = state.bought[idx].add(m.count);
+  } else {
+    if (!canAffordOne(idx)) return;
+    state.energy = state.energy.sub(costOf(idx));
+    state.sparks = state.sparks.sub(1);
+    if (!freeMode && idx > 0) state.gens[idx - 1] = state.gens[idx - 1].sub(prevGenNeeded(idx));
+    state.gens[idx] = state.gens[idx].add(1);
+    state.bought[idx] = state.bought[idx].add(1);
+  }
+  if (!wasUnlocked && state.bought[idx].gt(0) && _unlockedCount !== null) _unlockedCount++;
+  pulseBadge(idx);
+}
+
+function pulseBadge(idx) {
+  const r = rowCache[idx];
+  if (!r) return;
+  const badge = r.row.querySelector('.tier-badge');
+  badge.classList.remove('pulse');
+  void badge.offsetWidth;
+  badge.classList.add('pulse');
+}
+
+function getVisibleTierIndices() {
+  const visible = [];
+  let firstUnbought = state.bought.length;
+  for (let i = 0; i < state.bought.length; i++) {
+    if (state.bought[i].gt(0)) {
+      visible.push(i);
+    } else if (firstUnbought === state.bought.length) {
+      firstUnbought = i;
+    }
+  }
+  visible.push(firstUnbought);
+  return visible;
+}
+
+const rowCache = {};
+const rowsContainer = document.getElementById('gen-rows');
+const scrollEl = document.getElementById('gen-scroll');
+
+function addRow(idx) {
+  const t = tierInfo(idx);
+  const row = document.createElement('div');
+  row.className = 'gen-row';
+  row.innerHTML = `
+    <div><div class="tier-badge">${fmtTier(idx + 1)}</div></div>
+    <div class="upgrade-cell"><button type="button" class="upgrade-pill" title="Upgrade this generator">+0</button></div>
+    <div class="gen-num owned"></div>
+    <div class="gen-num rate dim"></div>
+    <div class="gen-num milestones dim"></div>
+    <div class="cost-group">
+      <span class="cost-energy">
+        <svg class="cost-icon" viewBox="0 0 16 16" fill="currentColor" shape-rendering="geometricPrecision" aria-hidden="true">
+          <path d="M10 1 L3 9 L7 9 L6 15 L13 7 L9 7 Z"/>
+        </svg>
+        <span class="cost-val"></span>
+      </span>
+      <span class="cost-prev"><span class="cost-prev-val"></span><span class="cost-prev-tier"></span></span>
+      <span class="cost-sparks">
+        <svg class="cost-icon" viewBox="0 0 16 16" fill="currentColor" shape-rendering="geometricPrecision" aria-hidden="true">
+          <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z"/>
+        </svg>
+        <span class="cost-val">1</span>
+      </span>
+    </div>
+    <div><button type="button" class="buy-btn b1">Buy 1</button></div>
+    <div><button type="button" class="buy-btn bmax">Max</button></div>
+  `;
+
+  rowsContainer.appendChild(row);
+
+  row.querySelector('.upgrade-pill').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!state.bought[idx] || state.bought[idx].lte(0)) return;
+    openUpgradePopover({ type: 'gen', idx }, e.currentTarget);
+  });
+
+  const b1 = row.querySelector('.b1');
+  let holdTimer = null;
+  let holdDelay = 200;
+  function holdTick() {
+    if (!rowCache[idx] || b1.disabled || !canAffordOne(idx)) { holdStop(); return; }
+    buy(idx, 1);
+    holdDelay = Math.max(30, holdDelay * 0.85);
+    holdTimer = setTimeout(holdTick, holdDelay);
+  }
+  function holdStop() {
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    holdDelay = 200;
+  }
+  b1.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || b1.disabled) return;
+    buy(idx, 1);
+    try { b1.setPointerCapture(e.pointerId); } catch(_) {}
+    holdDelay = 200;
+    holdTimer = setTimeout(holdTick, 400);
+  });
+  b1.addEventListener('pointerup', holdStop);
+  b1.addEventListener('pointercancel', holdStop);
+
+  row.querySelector('.bmax').addEventListener('click', () => buy(idx, 'max'));
+
+  rowCache[idx] = {
+    row,
+    owned: row.querySelector('.owned'),
+    rate: row.querySelector('.rate'),
+    milestones: row.querySelector('.milestones'),
+    costEnergy: row.querySelector('.cost-energy'),
+    costEnergyVal: row.querySelector('.cost-energy .cost-val'),
+    costPrev: row.querySelector('.cost-prev'),
+    costPrevVal: row.querySelector('.cost-prev-val'),
+    costPrevTier: row.querySelector('.cost-prev-tier'),
+    costSparks: row.querySelector('.cost-sparks'),
+    upgradeBadge: row.querySelector('.upgrade-pill'),
+    buy1: row.querySelector('.b1'),
+    buyMax: row.querySelector('.bmax'),
+  };
+}
+
+const ROW_GAP = 8;
+const VIRTUAL_BUFFER = 5;
+let measuredRowHeight = 66;
+let lastVisibleCount = 0;
+
+const maxTierEl = document.getElementById('max-tier-text');
+let lastBadgeWidth = '38px';
+// Returns the highest 1-indexed gen tier the player has unlocked (bought ≥ 1).
+function highestTierReached() {
+  for (let i = state.bought.length - 1; i >= 0; i--) {
+    if (state.bought[i] && state.bought[i].gt(0)) return i + 1;
+  }
+  return 0;
+}
+
+function render() {
+  document.getElementById('energy').textContent = fmt(state.energy);
+  document.getElementById('rate').textContent = '+' + fmt((state.gens[0] || D0).mul(genUpgradeMult(0)).mul(PROD_RATE));
+  document.getElementById('sparks').textContent = fmt(state.sparks);
+  const sparksFlowing = state.bought[0] && state.bought[0].gt(0);
+  document.getElementById('spark-rate').textContent = sparksFlowing ? '+' + fmt(sparksUpgradeMult().mul(SPARK_RATE)) : '+0';
+  document.getElementById('coins').textContent = fmt(state.coins);
+  const sparksLvl = sparksUpgradeLevel();
+  const sparksPill = document.getElementById('sparks-upgrade-pill');
+  sparksPill.textContent = '+' + fmtInt(sparksLvl);
+  sparksPill.classList.toggle('has-level', sparksLvl > 0);
+  const coinsLvl = coinsUpgradeLevel();
+  const coinsPill = document.getElementById('coins-upgrade-pill');
+  coinsPill.textContent = '+' + fmtInt(coinsLvl);
+  coinsPill.classList.toggle('has-level', coinsLvl > 0);
+  const maxTier = getUnlockedCount();
+  const maxTierText = maxTier > 0 ? fmtTier(maxTier) : '—';
+  if (maxTierEl.textContent !== maxTierText) maxTierEl.textContent = maxTierText;
+
+  // Responsive tier badge width based on highest visible tier number
+  const highestVisibleTier = Math.max(state.bought.length, maxTier + 1);
+  const tierStrLen = fmtTier(highestVisibleTier).length;
+  const badgeW = Math.max(38, tierStrLen * 8 + 20);
+  const badgeWStr = badgeW + 'px';
+  if (lastBadgeWidth !== badgeWStr) {
+    document.documentElement.style.setProperty('--tier-badge-min', badgeWStr);
+    lastBadgeWidth = badgeWStr;
+  }
+
+  const visible = getVisibleTierIndices();
+
+  // Detect newly unlocked tier (for animation + auto-scroll)
+  let newlyUnlocked = null;
+  let wasNearBottom = false;
+  if (visible.length > lastVisibleCount && lastVisibleCount > 0) {
+    newlyUnlocked = visible[visible.length - 1];
+    wasNearBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight < 80;
+  }
+  lastVisibleCount = visible.length;
+
+  // Measure row height (cached after first row in DOM)
+  const anyRow = rowsContainer.querySelector('.gen-row');
+  if (anyRow && anyRow.offsetHeight > 0) measuredRowHeight = anyRow.offsetHeight;
+  const itemHeight = measuredRowHeight + ROW_GAP;
+
+  // Set total scroll height
+  rowsContainer.style.height = (visible.length * itemHeight - ROW_GAP) + 'px';
+
+  // Determine viewport range
+  const scrollTop = scrollEl.scrollTop;
+  const clientHeight = scrollEl.clientHeight;
+  const firstIdx = Math.max(0, Math.floor(scrollTop / itemHeight) - VIRTUAL_BUFFER);
+  const lastIdx = Math.min(visible.length - 1, Math.ceil((scrollTop + clientHeight) / itemHeight) + VIRTUAL_BUFFER);
+
+  // Set of tiers that should be in DOM right now
+  const tiersInView = new Set();
+  for (let i = firstIdx; i <= lastIdx; i++) tiersInView.add(visible[i]);
+
+  // Remove rows that scrolled out of viewport
+  for (const k of Object.keys(rowCache)) {
+    const idx = +k;
+    if (!tiersInView.has(idx)) {
+      rowCache[idx].row.remove();
+      delete rowCache[idx];
+    }
+  }
+
+  // Add and position rows in viewport
+  for (let i = firstIdx; i <= lastIdx; i++) {
+    const idx = visible[i];
+    if (!rowCache[idx]) addRow(idx);
+    rowCache[idx].row.style.top = (i * itemHeight) + 'px';
+  }
+
+  // Trigger appearance animation for newly unlocked tier
+  if (newlyUnlocked !== null && rowCache[newlyUnlocked]) {
+    const row = rowCache[newlyUnlocked].row;
+    row.classList.remove('new-tier');
+    void row.offsetWidth;
+    row.classList.add('new-tier');
+    setTimeout(() => row.classList.remove('new-tier'), 500);
+  }
+
+  // Auto-scroll to bottom if user was already there
+  if (wasNearBottom) {
+    requestAnimationFrame(() => {
+      scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+    });
+  }
+
+  for (const idx of tiersInView) {
+    const r = rowCache[idx];
+    const cost = costOf(idx);
+    const prevCost = prevGenNeeded(idx);
+    const hasEnergy = state.energy.gte(cost);
+    const hasPrev = freeMode || idx === 0 || (state.gens[idx - 1] || D0).gte(prevCost);
+    const hasSparks = state.sparks.gte(1);
+    const canAfford = hasEnergy && hasPrev && hasSparks;
+    const max = maxAffordable(idx, buyAmountPct);
+    const owned = state.gens[idx] || D0;
+    const isBought = (state.bought[idx] || D0).gt(0);
+    const tierRate = owned.mul(genUpgradeMult(idx)).mul(PROD_RATE);
+
+    r.row.classList.toggle('has-owned', isBought);
+    r.row.classList.toggle('is-next', !isBought);
+
+    const lvl = genTotalUpgradeLevel(idx);
+    const lvlText = '+' + fmtInt(lvl);
+    if (r.upgradeBadge.textContent !== lvlText) r.upgradeBadge.textContent = lvlText;
+    r.upgradeBadge.classList.toggle('has-level', lvl > 0);
+
+    r.owned.textContent = fmt(owned);
+    r.owned.classList.toggle('muted', owned.lt(0.01));
+    r.rate.textContent = owned.gt(0.01) ? '+' + fmt(tierRate) + '/s' : '—';
+    r.rate.classList.toggle('muted', owned.lte(0.01));
+
+    const milestonesReached = state.milestonesClaimed[idx] || D0;
+    const hasMilestones = milestonesReached.gt(0);
+    r.milestones.textContent = hasMilestones ? fmtInt(milestonesReached) : '—';
+    r.milestones.classList.toggle('muted', !hasMilestones);
+
+    r.costEnergyVal.textContent = fmt(cost);
+    r.costEnergy.classList.toggle('lacking', !hasEnergy);
+    const showPrev = idx > 0 && prevCost.gt(0);
+    if (showPrev) {
+      r.costPrevVal.textContent = fmt(prevCost);
+      r.costPrevTier.textContent = fmtTier(idx);
+    } else {
+      r.costPrevVal.textContent = '';
+      r.costPrevTier.textContent = '';
+    }
+    r.costPrev.style.display = showPrev ? '' : 'none';
+    r.costPrev.classList.toggle('lacking', showPrev && !hasPrev);
+    r.costSparks.classList.toggle('lacking', !hasSparks);
+
+    if (r.buy1.disabled !== !canAfford) r.buy1.disabled = !canAfford;
+    r.buy1.classList.toggle('afford', canAfford);
+    const maxDisabled = max.count.lte(0);
+    if (r.buyMax.disabled !== maxDisabled) r.buyMax.disabled = maxDisabled;
+    const maxText = max.count.gt(0) ? '+' + fmtInt(max.count) : 'Max';
+    if (r.buyMax.textContent !== maxText) r.buyMax.textContent = maxText;
+  }
+
+  const elapsedSeconds = isInSetup ? 0 : Math.floor((Date.now() - state.startTime) / 1000);
+  document.getElementById('elapsed-text').textContent = formatElapsed(elapsedSeconds);
+}
+
+function formatElapsed(elapsed) {
+  const MINUTE = 60, HOUR = 3600, DAY = 86400, MONTH = 30 * DAY, YEAR = 365 * DAY;
+  if (elapsed >= YEAR) {
+    const y = Math.floor(elapsed / YEAR);
+    const mo = Math.floor((elapsed % YEAR) / MONTH);
+    return y + 'y ' + mo + 'mo';
+  }
+  if (elapsed >= MONTH) {
+    const mo = Math.floor(elapsed / MONTH);
+    const d = Math.floor((elapsed % MONTH) / DAY);
+    return mo + 'mo ' + d + 'd';
+  }
+  if (elapsed >= DAY) {
+    const d = Math.floor(elapsed / DAY);
+    const h = Math.floor((elapsed % DAY) / HOUR);
+    return d + 'd ' + h + 'h';
+  }
+  if (elapsed >= HOUR) {
+    const h = Math.floor(elapsed / HOUR);
+    const m = Math.floor((elapsed % HOUR) / MINUTE);
+    return h + 'h ' + m + 'm';
+  }
+  if (elapsed >= MINUTE) {
+    const m = Math.floor(elapsed / MINUTE);
+    const s = elapsed % 60;
+    return m + 'm ' + s + 's';
+  }
+  return elapsed + 's';
+}
+
+let lastTick = performance.now();
+let fpsLast = lastTick;
+let fpsFrames = 0;
+const fpsEl = document.getElementById('fps-text');
+
+// Compute Pressure API — Chromium-only proxy for "how stressed is the CPU".
+// Maps the 4 official states to a colored label. If the API is missing, the
+// indicator stays hidden.
+(function setupCpuPressure() {
+  const cpuInd = document.getElementById('cpu-ind');
+  const cpuText = document.getElementById('cpu-text');
+  if (typeof PressureObserver === 'undefined') return;
+  const labels = {
+    nominal:  { text: 'idle',     color: 'var(--pos)'   },
+    fair:     { text: 'normal',   color: 'var(--text-1)' },
+    serious:  { text: 'high',     color: 'var(--accent)' },
+    critical: { text: 'critical', color: 'var(--neg)'   },
+  };
+  try {
+    const observer = new PressureObserver((records) => {
+      const last = records[records.length - 1];
+      if (!last) return;
+      const meta = labels[last.state] || { text: last.state, color: 'var(--text-2)' };
+      cpuText.textContent = meta.text;
+      cpuText.style.color = meta.color;
+    });
+    observer.observe('cpu', { sampleInterval: 1000 }).then(() => {
+      cpuInd.removeAttribute('hidden');
+    }).catch(() => {/* permission denied or unsupported source */});
+  } catch (e) { /* unavailable */ }
+})();
+// Decouple simulate rate from render rate. Render still runs every frame so the
+// UI stays smooth; simulate runs at most some Hz per second using the accumulated
+// dt. With many gens the Decimal cascade math dominates the budget, so the rate
+// scales down adaptively to keep the main thread responsive at any size:
+//   ≤ 10k gens  → 30Hz (default — visually identical to per-frame simulate)
+//   ≤ 50k gens  → 20Hz
+//   > 50k gens  → 10Hz (extreme stress-test territory)
+function currentSimulateInterval() {
+  const n = state.gens.length;
+  if (n > 50000) return 1 / 10;
+  if (n > 10000) return 1 / 20;
+  return 1 / 30;
+}
+let simulateAccum = 0;
+function loop(now) {
+  const dt = Math.min((now - lastTick) / 1000, 0.1);
+  lastTick = now;
+  if (!isInSetup) {
+    simulateAccum += dt;
+    if (simulateAccum >= currentSimulateInterval()) {
+      simulate(simulateAccum);
+      simulateAccum = 0;
+    }
+    tryAutoBuy(dt);
+    tryFullAuto(dt);
+    tryEqualizer(dt);
+  }
+  render();
+  fpsFrames++;
+  if (now - fpsLast >= 500) {
+    const fps = Math.round((fpsFrames * 1000) / (now - fpsLast));
+    fpsEl.textContent = fps + ' fps';
+    fpsFrames = 0;
+    fpsLast = now;
+  }
+  requestAnimationFrame(loop);
+}
+
+const modal = document.getElementById('modal');
+const modalCancel = document.getElementById('modal-cancel');
+const modalConfirm = document.getElementById('modal-confirm');
+let lastFocused = null;
+
+function showResetModal() {
+  const totalGens = state.gens.reduce((a, b) => a.add(b), D0);
+  const timeStr = formatElapsed(Math.floor((Date.now() - state.startTime) / 1000));
+  document.getElementById('reset-energy').textContent = fmt(state.energy);
+  document.getElementById('reset-gens').textContent = fmt(totalGens);
+  document.getElementById('reset-time').textContent = timeStr;
+
+  lastFocused = document.activeElement;
+  modal.removeAttribute('hidden');
+  setTimeout(() => modalCancel.focus(), 50);
+}
+
+function hideModal() {
+  modal.setAttribute('hidden', '');
+  if (lastFocused && lastFocused.focus) lastFocused.focus();
+}
+
+document.getElementById('reset').addEventListener('click', showResetModal);
+modalCancel.addEventListener('click', hideModal);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) hideModal();
+});
+modalConfirm.addEventListener('click', () => {
+  isResetting = true;
+  try {
+    localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem('cascade-freemode-locked');
+    localStorage.removeItem('cascade-autobuy');
+    localStorage.removeItem('cascade-fullauto');
+    localStorage.removeItem('cascade-equalizer');
+    localStorage.removeItem('cascade-gen-cap');
+    localStorage.setItem('cascade-needs-setup', '1');
+  } catch(e) {}
+  location.reload();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !modal.hasAttribute('hidden')) hideModal();
+});
+
+function save() {
+  if (isResetting || isInSetup) return;
+  state.lastSave = Date.now();
+  try {
+    const serialized = {
+      energy: state.energy.toString(),
+      sparks: state.sparks.toString(),
+      coins: state.coins.toString(),
+      gens: state.gens.map(g => g.toString()),
+      bought: state.bought.map(b => b.toString()),
+      milestonesClaimed: state.milestonesClaimed.map(m => m.toString()),
+      upgrades: state.upgrades,
+      scrollTop: scrollEl ? scrollEl.scrollTop : 0,
+      startTime: state.startTime,
+      lastSave: state.lastSave,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(serialized));
+    const t = new Date();
+    const hh = String(t.getHours()).padStart(2,'0');
+    const mm = String(t.getMinutes()).padStart(2,'0');
+    const ss = String(t.getSeconds()).padStart(2,'0');
+    document.getElementById('save-text').textContent = `saved ${hh}:${mm}:${ss}`;
+  } catch(e) { console.error('save failed', e); }
+}
+const saveInterval = setInterval(save, 5000);
+window.addEventListener('beforeunload', () => { if (!isResetting) save(); });
+
+let lastVisibleAt = Date.now();
+let wakeLock = null;
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) { /* permission denied or unsupported */ }
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    if (!isResetting) save();
+    lastVisibleAt = Date.now();
+  } else if (document.visibilityState === 'visible') {
+    const elapsedMs = Math.max(0, Date.now() - lastVisibleAt);
+    if (elapsedMs > 500 && !isInSetup) simulate(elapsedMs / 1000);
+    lastVisibleAt = Date.now();
+    lastTick = performance.now();
+    if (wakeLock === null) requestWakeLock();
+  }
+});
+requestWakeLock();
+
+const html = document.documentElement;
+const themeBtn = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+function setTheme(mode) {
+  html.classList.toggle('dark', mode === 'dark');
+  themeIcon.className = 'ti ' + (mode === 'dark' ? 'ti-moon' : 'ti-sun');
+  localStorage.setItem(THEME_KEY, mode);
+}
+themeBtn.addEventListener('click', () => {
+  setTheme(html.classList.contains('dark') ? 'light' : 'dark');
+  const isDarkNow = html.classList.contains('dark');
+  if (isDarkNow && currentAccent === 'black') currentAccent = 'white';
+  else if (!isDarkNow && currentAccent === 'white') currentAccent = 'black';
+  localStorage.setItem(ACCENT_KEY, currentAccent);
+  applyAccent(currentAccent);
+});
+const savedTheme = localStorage.getItem(THEME_KEY);
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
+function fixed(c) { return { light: c, dark: c }; }
+const ACCENT_THEMES = {
+  salmon:  fixed('#e85d39'),
+  red:     fixed('#dc2626'),
+  maroon:  fixed('#7f1d1d'),
+  amber:   fixed('#d97706'),
+  yellow:  fixed('#ca8a04'),
+  brown:   fixed('#7c4a1e'),
+  olive:   fixed('#4d7c0f'),
+  lime:    fixed('#65a30d'),
+  teal:    fixed('#0d9488'),
+  blue:    fixed('#2563eb'),
+  indigo:  fixed('#4338ca'),
+  purple:  fixed('#9333ea'),
+  magenta: fixed('#a21caf'),
+  pink:    fixed('#db2777'),
+  // Neutrals
+  slate:   fixed('#475569'),
+  black:   fixed('#0a0a0a'),
+  white:   fixed('#fafafa'),
+};
+const ACCENT_KEY = 'cascade-accent';
+let currentAccent = localStorage.getItem(ACCENT_KEY) || 'salmon';
+if (!ACCENT_THEMES[currentAccent]) currentAccent = 'salmon';
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function luminance(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+function applyAccent(key) {
+  const theme = ACCENT_THEMES[key] || ACCENT_THEMES.salmon;
+  const isDark = html.classList.contains('dark');
+  const accent = isDark ? theme.dark : theme.light;
+  const softAlpha = isDark ? 0.14 : 0.10;
+  const isLightAccent = luminance(accent) > 0.6;
+  const accentText = isLightAccent ? '#0a0a0a' : '#ffffff';
+  const accentTextSoft = isLightAccent ? 'rgba(0,0,0,.65)' : 'rgba(255,255,255,.85)';
+  document.documentElement.style.setProperty('--accent', accent);
+  document.documentElement.style.setProperty('--accent-text', accentText);
+  document.documentElement.style.setProperty('--accent-text-soft', accentTextSoft);
+  document.documentElement.style.setProperty('--accent-soft', hexToRgba(accent, softAlpha));
+  document.documentElement.style.setProperty('--ring', hexToRgba(accent, isDark ? 0.28 : 0.20));
+  document.documentElement.style.setProperty('--accent-glow', hexToRgba(accent, isDark ? 0.32 : 0.40));
+  document.querySelectorAll('.swatch').forEach(s => {
+    const swatchTheme = ACCENT_THEMES[s.dataset.accent];
+    if (swatchTheme) {
+      s.style.setProperty('--c', isDark ? swatchTheme.dark : swatchTheme.light);
+    }
+    s.classList.toggle('selected', s.dataset.accent === key);
+  });
+}
+applyAccent(currentAccent);
+
+const paletteBtn = document.getElementById('palette-toggle');
+const palettePopover = document.getElementById('palette-popover');
+paletteBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  palettePopover.toggleAttribute('hidden');
+});
+palettePopover.addEventListener('click', (e) => {
+  const swatch = e.target.closest('.swatch');
+  if (!swatch) return;
+  currentAccent = swatch.dataset.accent;
+  localStorage.setItem(ACCENT_KEY, currentAccent);
+  applyAccent(currentAccent);
+});
+document.addEventListener('click', (e) => {
+  if (!palettePopover.contains(e.target) && !paletteBtn.contains(e.target)) {
+    palettePopover.setAttribute('hidden', '');
+  }
+});
+
+const freemodeBtn = document.getElementById('freemode-toggle');
+function applyFreeMode() {
+  const locked = localStorage.getItem('cascade-freemode-locked') === '1';
+  freemodeBtn.classList.toggle('active', freeMode);
+  freemodeBtn.disabled = locked;
+  freemodeBtn.style.display = freeMode ? '' : 'none';
+  freemodeBtn.title = freeMode ? 'Easy mode active' : '';
+  html.classList.toggle('freemode', freeMode);
+}
+freemodeBtn.addEventListener('click', () => {
+  if (localStorage.getItem('cascade-freemode-locked') === '1') return;
+  freeMode = !freeMode;
+  localStorage.setItem('cascade-freemode', freeMode ? '1' : '0');
+  applyFreeMode();
+});
+applyFreeMode();
+
+// Setup modal — shown after a reset, before the new run begins
+(function setupModalInit() {
+  if (localStorage.getItem('cascade-needs-setup') !== '1') return;
+  const setupModal = document.getElementById('setup-modal');
+  const setupStart = document.getElementById('setup-start');
+  const modeCards = setupModal.querySelectorAll('.mode-card');
+  let selectedMode = null;
+  setupStart.disabled = true;
+  modeCards.forEach(card => {
+    card.addEventListener('click', () => {
+      selectedMode = card.dataset.mode;
+      modeCards.forEach(c => c.classList.toggle('selected', c.dataset.mode === selectedMode));
+      setupStart.disabled = false;
+    });
+  });
+  setupModal.removeAttribute('hidden');
+  setupStart.addEventListener('click', () => {
+    if (!selectedMode) return;
+    freeMode = selectedMode === 'easy';
+    localStorage.setItem('cascade-freemode', freeMode ? '1' : '0');
+    localStorage.setItem('cascade-freemode-locked', '1');
+    localStorage.removeItem('cascade-needs-setup');
+    state.startTime = Date.now();
+    state.lastSave = Date.now();
+    lastVisibleAt = Date.now();
+    lastTick = performance.now();
+    isInSetup = false;
+    applyFreeMode();
+    setupModal.setAttribute('hidden', '');
+  });
+})();
+
+// Upgrade popover — supports 3 contexts: gen (per generator), sparks, coins
+const upgradePopover = document.getElementById('upgrade-popover');
+const upgTitle = document.getElementById('upg-title');
+const upgProdName = document.getElementById('upg-prod-name');
+const upgProdLevel = document.getElementById('upg-prod-level');
+const upgProdMetric = document.getElementById('upg-prod-metric');
+const upgProdMetricLabel = document.getElementById('upg-prod-metric-label');
+const upgProdBuy = document.getElementById('upg-prod-buy');
+const upgProdBuyLabel = document.getElementById('upg-prod-buy-label');
+const upgProdBuyCost = document.getElementById('upg-prod-buy-cost');
+const upgCostSection = document.getElementById('upg-cost-section');
+const upgCostLevel = document.getElementById('upg-cost-level');
+const upgCostMetric = document.getElementById('upg-cost-metric');
+const upgCostBuy = document.getElementById('upg-cost-buy');
+const upgCostBuyLabel = document.getElementById('upg-cost-buy-label');
+const upgCostBuyCost = document.getElementById('upg-cost-buy-cost');
+let upgradePopoverContext = null; // { type: 'gen'|'sparks'|'coins', idx? }
+
+function setBuyButton(labelEl, costEl, label, cost, count) {
+  const isOne = (cost && cost.eq) ? cost.eq(1) : cost === 1;
+  let labelText = label;
+  if (count != null && count.gt(1)) labelText += ' ×' + fmtInt(count);
+  labelEl.textContent = labelText;
+  costEl.textContent = fmt(cost) + ' coin' + (isOne ? '' : 's');
+}
+function setBuyButtonStatic(labelEl, costEl, text) {
+  labelEl.textContent = text;
+  costEl.textContent = '';
+}
+
+// 0 = "buy exactly 1 level" (single-unit mode), otherwise treated as a % of max.
+const UPG_VALID_AMOUNTS = [0, 1, 10, 50, 100];
+let upgradeBuyAmountPct = parseInt(localStorage.getItem('cascade-upgrade-buy-amount') || '100', 10);
+if (!UPG_VALID_AMOUNTS.includes(upgradeBuyAmountPct)) upgradeBuyAmountPct = 100;
+
+// Compute how many upgrade levels we can buy and the total cost.
+// Cost at level L = base × 2^L. To buy N levels starting at L: base × 2^L × (2^N − 1).
+// Max N where total ≤ coins: N = floor(log2(1 + coins / (base × 2^L))).
+// `base` defaults to 1 (used by sparks/coins). Gen upgrades pass their tier (idx+1).
+function computeUpgradeBuyPlan(currentLevel, pct, maxLvl, base) {
+  const baseD = (base && base.mul) ? base : D(base || 1);
+  const nextCost = Decimal.pow(2, currentLevel).mul(baseD);
+  const coins = state.coins;
+  if (coins.lt(nextCost)) return { count: D0, cost: nextCost };
+
+  const ratio = coins.div(nextCost);
+  let maxN = ratio.add(1).log2().floor();
+  if (!maxN.isFinite() || maxN.lt(1)) maxN = D1;
+
+  if (maxLvl != null) {
+    const remaining = D(Math.max(0, maxLvl - currentLevel));
+    if (maxN.gt(remaining)) maxN = remaining;
+  }
+
+  let count = maxN;
+  if (pct === 0) {
+    // Single-unit mode: buy exactly 1 level (if affordable and below maxLvl).
+    count = maxN.gte(1) ? D1 : D0;
+  } else if (pct != null && pct < 100) {
+    count = count.mul(pct).div(100).floor();
+    if (count.lt(1) && maxN.gte(1)) count = D1;
+  }
+
+  if (count.lte(0)) return { count: D0, cost: nextCost };
+
+  const totalCost = nextCost.mul(Decimal.pow(2, count).sub(1));
+  return { count, cost: totalCost };
+}
+
+function applyUpgradeBuyPlan(id, plan) {
+  if (plan.count.lte(0)) return false;
+  if (state.coins.lt(plan.cost)) return false;
+  state.coins = state.coins.sub(plan.cost);
+  // count is bounded by log2(coins) — fits in JS Number for any realistic coins value
+  setUpgradeLevel(id, getUpgradeLevel(id) + plan.count.toNumber());
+  return true;
+}
+
+function refreshUpgradePopover() {
+  const ctx = upgradePopoverContext;
+  if (!ctx) return;
+
+  if (ctx.type === 'gen') {
+    upgTitle.textContent = 'Generator ' + fmtTier(ctx.idx + 1);
+    upgProdName.textContent = 'Production';
+    upgProdMetricLabel.textContent = 'Multiplier';
+
+    const pLvl = genUpgradeLevel(ctx.idx);
+    const pMult = Decimal.pow(2, pLvl);
+    upgProdLevel.textContent = fmtInt(pLvl);
+    upgProdMetric.textContent = fmt(pMult) + 'x';
+    const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null, genUpgradeBase(ctx.idx));
+    setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', pPlan.cost, pPlan.count);
+    upgProdBuy.disabled = pPlan.count.lte(0);
+
+    upgCostSection.removeAttribute('hidden');
+    const cLvl = genCostLevel(ctx.idx);
+    const cMaxLvl = genCostMaxLevel(ctx.idx);
+    const cMult = Decimal.pow(0.5, cLvl);
+    const cPctDec = cMult.mul(100);
+    let cPctText;
+    if (cLvl === 0) cPctText = '100%';
+    else if (cPctDec.gte(1)) cPctText = Math.round(cPctDec.toNumber()) + '%';
+    else if (cPctDec.gte(0.01)) cPctText = cPctDec.toNumber().toFixed(2) + '%';
+    else cPctText = '<0.01%';
+    upgCostLevel.textContent = fmtInt(cLvl);
+    upgCostMetric.textContent = cPctText;
+    if (cMaxLvl === 0) {
+      setBuyButtonStatic(upgCostBuyLabel, upgCostBuyCost, 'Not available');
+      upgCostBuy.disabled = true;
+    } else if (cLvl >= cMaxLvl) {
+      setBuyButtonStatic(upgCostBuyLabel, upgCostBuyCost, 'MAX');
+      upgCostBuy.disabled = true;
+    } else {
+      const cPlan = computeUpgradeBuyPlan(cLvl, upgradeBuyAmountPct, cMaxLvl, genUpgradeBase(ctx.idx));
+      setBuyButton(upgCostBuyLabel, upgCostBuyCost, 'Upgrade', cPlan.cost, cPlan.count);
+      upgCostBuy.disabled = cPlan.count.lte(0);
+    }
+  } else if (ctx.type === 'sparks') {
+    upgTitle.textContent = 'Sparks';
+    upgProdName.textContent = 'Production rate';
+    upgProdMetricLabel.textContent = 'Per second';
+    const lvl = sparksUpgradeLevel();
+    upgProdLevel.textContent = fmtInt(lvl);
+    upgProdMetric.textContent = fmt(Decimal.pow(2, lvl).mul(SPARK_RATE));
+    const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
+    setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', plan.cost, plan.count);
+    upgProdBuy.disabled = plan.count.lte(0);
+    upgCostSection.setAttribute('hidden', '');
+  } else if (ctx.type === 'coins') {
+    upgTitle.textContent = 'Coins';
+    upgProdName.textContent = 'Reward per milestone';
+    upgProdMetricLabel.textContent = 'Per milestone';
+    const lvl = coinsUpgradeLevel();
+    upgProdLevel.textContent = fmtInt(lvl);
+    upgProdMetric.textContent = fmt(Decimal.pow(2, lvl));
+    const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
+    setBuyButton(upgProdBuyLabel, upgProdBuyCost, 'Upgrade', plan.cost, plan.count);
+    upgProdBuy.disabled = plan.count.lte(0);
+    upgCostSection.setAttribute('hidden', '');
+  }
+}
+
+function positionUpgradePopover(anchor) {
+  const r = anchor.getBoundingClientRect();
+  const popH = upgradePopover.offsetHeight;
+  const popW = upgradePopover.offsetWidth;
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+  const margin = 16;
+
+  // Vertical: prefer centered to anchor; clamp to viewport
+  let top = r.top + r.height / 2 - popH / 2;
+  if (top + popH > vh - margin) top = vh - margin - popH;
+  if (top < margin) top = margin;
+
+  // Horizontal: prefer right of anchor; flip to left if overflowing
+  let left = r.right + 12;
+  if (left + popW > vw - margin) left = r.left - popW - 12;
+  if (left < margin) left = margin;
+
+  upgradePopover.style.left = left + 'px';
+  upgradePopover.style.top = top + 'px';
+  upgradePopover.style.transform = '';
+}
+
+function openUpgradePopover(ctx, anchor) {
+  upgradePopoverContext = ctx;
+  upgradePopover.removeAttribute('hidden');
+  refreshUpgradePopover();
+  positionUpgradePopover(anchor);
+}
+function closeUpgradePopover() {
+  upgradePopoverContext = null;
+  upgradePopover.setAttribute('hidden', '');
+}
+function attachHoldBuy(btn, buyFn) {
+  let timer = null;
+  let delay = 200;
+  function tick() {
+    if (btn.disabled || !buyFn()) { stop(); return; }
+    refreshUpgradePopover();
+    delay = Math.max(30, delay * 0.85);
+    timer = setTimeout(tick, delay);
+  }
+  function stop() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    delay = 200;
+  }
+  btn.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || btn.disabled) return;
+    e.stopPropagation();
+    if (!buyFn()) return;
+    refreshUpgradePopover();
+    try { btn.setPointerCapture(e.pointerId); } catch(_) {}
+    delay = 200;
+    timer = setTimeout(tick, 400);
+  });
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointercancel', stop);
+}
+
+attachHoldBuy(upgProdBuy, () => {
+  const ctx = upgradePopoverContext;
+  if (!ctx) return false;
+  if (ctx.type === 'gen') {
+    const plan = computeUpgradeBuyPlan(genUpgradeLevel(ctx.idx), upgradeBuyAmountPct, null, genUpgradeBase(ctx.idx));
+    return applyUpgradeBuyPlan(genUpgradeKey(ctx.idx), plan);
+  }
+  if (ctx.type === 'sparks') {
+    const plan = computeUpgradeBuyPlan(sparksUpgradeLevel(), upgradeBuyAmountPct, null);
+    return applyUpgradeBuyPlan('sparks', plan);
+  }
+  if (ctx.type === 'coins') {
+    const plan = computeUpgradeBuyPlan(coinsUpgradeLevel(), upgradeBuyAmountPct, null);
+    return applyUpgradeBuyPlan('coins', plan);
+  }
+  return false;
+});
+attachHoldBuy(upgCostBuy, () => {
+  const ctx = upgradePopoverContext;
+  if (!ctx || ctx.type !== 'gen') return false;
+  const cMaxLvl = genCostMaxLevel(ctx.idx);
+  if (cMaxLvl === 0) return false;
+  const plan = computeUpgradeBuyPlan(genCostLevel(ctx.idx), upgradeBuyAmountPct, cMaxLvl, genUpgradeBase(ctx.idx));
+  return applyUpgradeBuyPlan(genCostKey(ctx.idx), plan);
+});
+document.addEventListener('click', (e) => {
+  if (!upgradePopoverContext) return;
+  if (!upgradePopover.contains(e.target)) closeUpgradePopover();
+});
+
+const upgSegmentEl = document.getElementById('upg-amount-segment');
+function updateUpgSegmentUI() {
+  upgSegmentEl.querySelectorAll('.seg-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.amt, 10) === upgradeBuyAmountPct);
+  });
+}
+upgSegmentEl.querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    upgradeBuyAmountPct = parseInt(btn.dataset.amt, 10);
+    localStorage.setItem('cascade-upgrade-buy-amount', String(upgradeBuyAmountPct));
+    updateUpgSegmentUI();
+    refreshUpgradePopover();
+  });
+});
+updateUpgSegmentUI();
+
+// Click handlers for the resource pills
+document.getElementById('sparks-upgrade-pill').addEventListener('click', (e) => {
+  e.stopPropagation();
+  openUpgradePopover({ type: 'sparks' }, e.currentTarget);
+});
+document.getElementById('coins-upgrade-pill').addEventListener('click', (e) => {
+  e.stopPropagation();
+  openUpgradePopover({ type: 'coins' }, e.currentTarget);
+});
+
+document.getElementById('scroll-top').addEventListener('click', () => {
+  scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.getElementById('scroll-bottom').addEventListener('click', () => {
+  scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+});
+
+const VALID_AMOUNTS = [1, 10, 50, 100];
+let buyAmountPct = parseInt(localStorage.getItem('cascade-buy-amount') || '100', 10);
+if (!VALID_AMOUNTS.includes(buyAmountPct)) buyAmountPct = 100;
+const segmentEl = document.getElementById('amount-segment');
+function updateSegmentUI() {
+  segmentEl.querySelectorAll('.seg-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.amt, 10) === buyAmountPct);
+  });
+}
+segmentEl.querySelectorAll('.seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    buyAmountPct = parseInt(btn.dataset.amt, 10);
+    localStorage.setItem('cascade-buy-amount', String(buyAmountPct));
+    updateSegmentUI();
+  });
+});
+updateSegmentUI();
+
+// Auto-buy gen cap — user-set ceiling on which generator tiers the autopilot
+// (simple OR full) is allowed to UNLOCK / accumulate on. Empty = no cap.
+// Stored as 1-indexed gen number (e.g. 5000 means "stop at gen 5000").
+let genCap = parseInt(localStorage.getItem('cascade-gen-cap') || '0', 10);
+if (!isFinite(genCap) || genCap < 1) genCap = 0;
+const genCapInput = document.getElementById('gen-cap-input');
+if (genCap > 0) genCapInput.value = String(genCap);
+genCapInput.addEventListener('input', () => {
+  const v = parseInt(genCapInput.value, 10);
+  if (isFinite(v) && v >= 1) {
+    genCap = v;
+    localStorage.setItem('cascade-gen-cap', String(v));
+  } else {
+    genCap = 0;
+    localStorage.removeItem('cascade-gen-cap');
+  }
+});
+// Returns the highest 0-based gen index the autopilot may touch (Infinity = no cap).
+function maxAutoGenIdx() { return genCap > 0 ? genCap - 1 : Infinity; }
+
+// Auto-buy — when active, every tick try to buy the highest-tier generator
+// the player can afford, using the currently-selected buy amount (1%/10%/50%/Max).
+let autoBuyEnabled = localStorage.getItem('cascade-autobuy') === '1';
+const autobuyBtn = document.getElementById('autobuy-toggle');
+function updateAutoBuyUI() { autobuyBtn.classList.toggle('active', autoBuyEnabled); }
+autobuyBtn.addEventListener('click', () => {
+  autoBuyEnabled = !autoBuyEnabled;
+  localStorage.setItem('cascade-autobuy', autoBuyEnabled ? '1' : '0');
+  updateAutoBuyUI();
+});
+updateAutoBuyUI();
+
+let autoBuyAccum = 0;
+function tryAutoBuy(dt) {
+  if (!autoBuyEnabled || fullAutoEnabled || isInSetup) return;
+  // Throttle to ~10 attempts/sec so very fast frame rates don't melt the CPU
+  autoBuyAccum += dt;
+  if (autoBuyAccum < 0.1) return;
+  autoBuyAccum = 0;
+  // Target the next generator that hasn't been unlocked yet (bought count == 0),
+  // bounded by the user's gen cap (if any).
+  const cap = maxAutoGenIdx();
+  let targetIdx = -1;
+  const scanLimit = Math.min(state.bought.length, cap + 1);
+  for (let i = 0; i < scanLimit; i++) {
+    if (state.bought[i].lte(0)) { targetIdx = i; break; }
+  }
+  if (targetIdx === -1) {
+    const next = state.bought.length;
+    if (next <= cap) {
+      targetIdx = next;
+      ensureTier(targetIdx);
+    }
+  }
+  // Only buy if we have a target within the cap and can afford the next one.
+  if (targetIdx >= 0 && targetIdx <= cap && canAffordOne(targetIdx)) {
+    buy(targetIdx, 'max');
+  }
+}
+
+// Equalizer — buys gen upgrades top-down keeping every generator at the same
+// upgrade level. Won't push the top higher until everyone else has caught up.
+// Independent of the other autopilots; runs in its own loop step.
+// Stress test — one-shot: instantly grants 1 unit of generators 1 through 10,000.
+// Purely a dev/testing tool to exercise the late-game UI without grinding through
+// the early game. Skips any gen that already has bought > 0 so it doesn't overwrite
+// existing progress.
+document.getElementById('stress-test-btn').addEventListener('click', () => {
+  const BATCH = 1000;
+  // Find the index right after the highest currently-unlocked tier and grant the
+  // next BATCH tiers from there. Repeated clicks keep extending: 1k → 2k → 3k…
+  let nextIdx = 0;
+  for (let i = state.bought.length - 1; i >= 0; i--) {
+    if (state.bought[i].gt(0)) { nextIdx = i + 1; break; }
+  }
+  const endIdx = nextIdx + BATCH;
+  ensureTier(endIdx - 1);
+  for (let i = nextIdx; i < endIdx; i++) {
+    if (state.bought[i].lte(0)) {
+      state.bought[i] = D1;
+      if (state.gens[i].lt(1)) state.gens[i] = D1;
+    }
+  }
+  _unlockedCount = null; // recount lazily on next render
+});
+
+let equalizerEnabled = localStorage.getItem('cascade-equalizer') === '1';
+const equalizerBtn = document.getElementById('equalizer-toggle');
+function updateEqualizerUI() { equalizerBtn.classList.toggle('active', equalizerEnabled); }
+equalizerBtn.addEventListener('click', () => {
+  equalizerEnabled = !equalizerEnabled;
+  localStorage.setItem('cascade-equalizer', equalizerEnabled ? '1' : '0');
+  updateEqualizerUI();
+});
+updateEqualizerUI();
+
+let equalizerAccum = 0;
+function tryEqualizer(dt) {
+  if (!equalizerEnabled || isInSetup) return;
+  equalizerAccum += dt;
+  if (equalizerAccum < 0.1) return;
+  equalizerAccum = 0;
+
+  // Collect owned gens in bottom-up order. Cheaper gens go first so a single
+  // tick's coin budget is spread across many tiers instead of being burned on
+  // the expensive top-tier upgrades (cost scales with tier number).
+  const owned = [];
+  for (let i = 0; i < state.gens.length; i++) {
+    if (state.bought[i] && state.bought[i].gt(0)) owned.push(i);
+  }
+  if (owned.length === 0) return;
+
+  // PRODUCTION: find the minimum upgrade level, then buy 1 on every gen at that
+  // level (bottom-up) while coins last. Skips any gen already above the minimum.
+  let minProdLvl = Infinity;
+  for (const idx of owned) minProdLvl = Math.min(minProdLvl, genUpgradeLevel(idx));
+  for (const idx of owned) {
+    if (genUpgradeLevel(idx) !== minProdLvl) continue;
+    const plan = computeUpgradeBuyPlan(minProdLvl, 0, null, genUpgradeBase(idx));
+    if (plan.count.lte(0)) break; // out of coins this pass
+    applyUpgradeBuyPlan(genUpgradeKey(idx), plan);
+  }
+
+  // COST REDUCTION: same equalization logic, but only on gens where reduction is available.
+  const costEligible = owned.filter(i => genCostMaxLevel(i) > 0);
+  if (costEligible.length === 0) return;
+  let minCostLvl = Infinity;
+  for (const idx of costEligible) minCostLvl = Math.min(minCostLvl, genCostLevel(idx));
+  for (const idx of costEligible) {
+    if (genCostLevel(idx) !== minCostLvl) continue;
+    if (minCostLvl >= genCostMaxLevel(idx)) continue;
+    const plan = computeUpgradeBuyPlan(minCostLvl, 0, genCostMaxLevel(idx), genUpgradeBase(idx));
+    if (plan.count.lte(0)) break;
+    applyUpgradeBuyPlan(genCostKey(idx), plan);
+  }
+}
+
+// Full autopilot — when active, plays the entire game: buys generators (next + existing)
+// AND every affordable upgrade (per-gen production, per-gen cost reduction, sparks, coins).
+// Uses the same buy-amount % as everything else. Default OFF; cleared on save reset.
+let fullAutoEnabled = localStorage.getItem('cascade-fullauto') === '1';
+const fullautoBtn = document.getElementById('fullauto-toggle');
+function updateFullAutoUI() { fullautoBtn.classList.toggle('active', fullAutoEnabled); }
+fullautoBtn.addEventListener('click', () => {
+  fullAutoEnabled = !fullAutoEnabled;
+  localStorage.setItem('cascade-fullauto', fullAutoEnabled ? '1' : '0');
+  // Reset queue to start fresh from the top (coins) every time it turns on.
+  if (fullAutoEnabled) fullAutoQueueIdx = 0;
+  updateFullAutoUI();
+});
+updateFullAutoUI();
+
+let fullAutoAccum = 0;
+// Fixed cycle: 0 = coins upgrade, 1 = sparks upgrade, 2 = generator purchase, 3 = gen upgrade.
+// Always starts at 0 (coins) on load and on toggle-on, then advances one step per tick.
+let fullAutoQueueIdx = 0;
+function tryFullAuto(dt) {
+  if (!fullAutoEnabled || isInSetup) return;
+  fullAutoAccum += dt;
+  if (fullAutoAccum < 0.1) return;
+  fullAutoAccum = 0;
+
+  const slot = fullAutoQueueIdx;
+  if (slot === 0) {
+    // Coins upgrade
+    const lvl = coinsUpgradeLevel();
+    const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
+    if (plan.count.gt(0)) applyUpgradeBuyPlan('coins', plan);
+  } else if (slot === 1) {
+    // Sparks upgrade
+    const lvl = sparksUpgradeLevel();
+    const plan = computeUpgradeBuyPlan(lvl, upgradeBuyAmountPct, null);
+    if (plan.count.gt(0)) applyUpgradeBuyPlan('sparks', plan);
+  } else if (slot === 2) {
+    // Generator purchase: prioritize unlocking the next tier; if not affordable,
+    // accumulate on the highest already-unlocked tier we can afford.
+    // Bounded by the user's gen cap (if any).
+    const cap = maxAutoGenIdx();
+    let targetIdx = -1;
+    const scanLimit = Math.min(state.bought.length, cap + 1);
+    for (let i = 0; i < scanLimit; i++) {
+      if (state.bought[i].lte(0)) { targetIdx = i; break; }
+    }
+    if (targetIdx === -1) {
+      const next = state.bought.length;
+      if (next <= cap) {
+        targetIdx = next;
+        ensureTier(targetIdx);
+      }
+    }
+    if (targetIdx >= 0 && targetIdx <= cap && canAffordOne(targetIdx)) {
+      buy(targetIdx, 'max');
+    } else {
+      // Accumulate on highest affordable already-unlocked tier within the cap.
+      const startIdx = Math.min(state.bought.length - 1, cap);
+      for (let i = startIdx; i >= 0; i--) {
+        if (state.bought[i].gt(0) && canAffordOne(i)) { buy(i, 'max'); break; }
+      }
+    }
+  } else {
+    // Gen upgrade — strict highest-tier-first. Stop at the first gen (top down)
+    // that has anything affordable (production or cost reduction). Skip any gen
+    // that hasn't actually been bought yet (state.gens may include placeholder
+    // tiers ensureTier'd by the autopilot or popover lookups).
+    for (let i = state.gens.length - 1; i >= 0; i--) {
+      if (!state.bought[i] || state.bought[i].lte(0)) continue;
+
+      const base = genUpgradeBase(i);
+      const pLvl = genUpgradeLevel(i);
+      const pPlan = computeUpgradeBuyPlan(pLvl, upgradeBuyAmountPct, null, base);
+
+      const cMaxLvl = genCostMaxLevel(i);
+      const cLvlGen = genCostLevel(i);
+      const cAvailable = cMaxLvl > 0 && cLvlGen < cMaxLvl;
+      const cPlanGen = cAvailable
+        ? computeUpgradeBuyPlan(cLvlGen, upgradeBuyAmountPct, cMaxLvl, base)
+        : { count: D0, cost: D0 };
+
+      if (pPlan.count.gt(0) || cPlanGen.count.gt(0)) {
+        if (pPlan.count.gt(0)) applyUpgradeBuyPlan(genUpgradeKey(i), pPlan);
+        if (cPlanGen.count.gt(0)) applyUpgradeBuyPlan(genCostKey(i), cPlanGen);
+        break;
+      }
+    }
+  }
+  // Advance queue every tick — even if this slot bought nothing, the others get
+  // their fair turn instead of being starved.
+  fullAutoQueueIdx = (fullAutoQueueIdx + 1) % 4;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Leaderboard — mock 1000 players for layout testing. Replace with API later.
+// ─────────────────────────────────────────────────────────────────────────────
+const YOU_NAME = 'jonatan';
+const LB_PAGE_SIZE = 100;
+
+function generateMockLeaderboard(count) {
+  const adjectives = ['cosmic','epic','lazy','sneaky','turbo','silent','crazy','mighty','dark','shiny','gold','iron','fire','ice','shadow','super','mega','ultra','noob','pro','wild','calm','quick','slow','tiny','huge','grim','pure','rough','smooth','sweet','salty','spicy','funky','jazzy','witty','bold','chill','flux','retro','neon','toxic','swift','silent','lucky','rusty','blank','hyper','cyber','quantum'];
+  const nouns = ['ninja','wizard','bot','cat','panda','dragon','tiger','snake','hawk','wolf','bear','fox','lion','eagle','shark','owl','spider','rhino','gorilla','whale','phoenix','kraken','golem','ghost','sage','knight','pirate','viking','samurai','ronin','monk','jester','witch','vampire','demon','angel','titan','specter','warden','reaper','prophet','overlord','baron','duke','king','queen','jester','rogue','bard','druid','ranger'];
+  const countries = ['BR','US','JP','DE','FR','UK','CN','IN','KR','CA','AU','MX','IT','ES','NL','SE','NO','AR','CL','PT','RU','PL','TR','VN','TH','SG','PH','ZA','NG','EG','SA','AE','IL','UA','CZ','GR','RO','HU','FI','DK','NZ','MY','ID','PE','CO'];
+
+  const players = [];
+  for (let i = 0; i < count; i++) {
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const num = Math.floor(Math.random() * 999);
+    const sep = Math.random() < 0.5 ? '.' : (Math.random() < 0.5 ? '-' : '_');
+    const name = num > 100 ? `${adj}${sep}${noun}${num}` : `${adj}${sep}${noun}`;
+
+    // Tier distribution: most players in 1–250, few in 250–600 range
+    const tierRoll = Math.random();
+    const tier = Math.max(1, Math.floor(600 * Math.pow(tierRoll, 1.8)));
+    // Time correlates loosely with tier — faster players exist at every tier
+    const baseSeconds = tier * (240 + Math.random() * 480); // 4–12 min per tier base
+    const seconds = Math.floor(baseSeconds + Math.random() * 3600);
+    const country = countries[Math.floor(Math.random() * countries.length)];
+    players.push({ name, tier, seconds, country });
+  }
+  // Plant the player so we can see "you" highlighting + jump-to-me work
+  players[Math.floor(Math.random() * count)] = {
+    name: YOU_NAME, tier: 188, seconds: 1 * 3600 + 22 * 60, country: 'BR',
+  };
+  return players;
+}
+
+const MOCK_LEADERBOARD = generateMockLeaderboard(1000);
+
+function leaderboardSort(rows) {
+  return rows.slice().sort((a, b) => b.tier - a.tier || a.seconds - b.seconds);
+}
+const SORTED_LB = leaderboardSort(MOCK_LEADERBOARD);
+const YOU_RANK = SORTED_LB.findIndex(r => r.name === YOU_NAME) + 1; // 1-indexed
+const YOU_DATA = SORTED_LB[YOU_RANK - 1];
+
+function rankClass(rank) {
+  if (rank === 1) return 'top-1';
+  if (rank === 2) return 'top-2';
+  if (rank === 3) return 'top-3';
+  return '';
+}
+function rankPrefix(rank) {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return rank;
+}
+
+let lbCurrentPage = 1;
+function renderLeaderboardPage(page) {
+  lbCurrentPage = page;
+  const totalPages = Math.ceil(SORTED_LB.length / LB_PAGE_SIZE);
+  const start = (page - 1) * LB_PAGE_SIZE;
+  const end = Math.min(SORTED_LB.length, start + LB_PAGE_SIZE);
+  const slice = SORTED_LB.slice(start, end);
+  const list = document.getElementById('leaderboard-list');
+  list.innerHTML = slice.map((row, i) => {
+    const rank = start + i + 1;
+    const initials = row.name.replace(/[^a-z0-9]/gi, '').slice(0, 2).toUpperCase();
+    const isYou = row.name === YOU_NAME;
+    return `
+      <div class="lb-row${isYou ? ' you' : ''}" data-rank="${rank}">
+        <div class="lb-rank ${rankClass(rank)}">${rankPrefix(rank)}</div>
+        <div class="lb-player">
+          <div class="lb-avatar">${initials}</div>
+          <div class="lb-name">${escapeHtml(row.name)}${isYou ? '<span class="lb-you-tag">you</span>' : ''}</div>
+        </div>
+        <div class="lb-country">${row.country}</div>
+        <div class="lb-tier">Tier ${fmtTier(row.tier)}</div>
+        <div class="lb-time">${formatElapsed(row.seconds)}</div>
+      </div>
+    `;
+  }).join('');
+  list.scrollTop = 0;
+  renderPagination(page, totalPages);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderPagination(page, total) {
+  const pag = document.getElementById('leaderboard-pagination');
+  // Build page list with ellipses: always show first, last, current ±1, plus 2 and last-1 if close
+  const pages = new Set([1, total, page - 1, page, page + 1]);
+  if (page <= 3) { pages.add(2); pages.add(3); pages.add(4); }
+  if (page >= total - 2) { pages.add(total - 1); pages.add(total - 2); pages.add(total - 3); }
+  const sorted = [...pages].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+  let html = '';
+  html += `<button class="lb-page-btn" id="lb-prev" ${page === 1 ? 'disabled' : ''} aria-label="Previous"><i class="ti ti-chevron-left"></i></button>`;
+  let prev = 0;
+  for (const p of sorted) {
+    if (prev && p > prev + 1) html += `<span class="lb-page-ellipsis">…</span>`;
+    html += `<button class="lb-page-btn${p === page ? ' selected' : ''}" data-page="${p}">${p}</button>`;
+    prev = p;
+  }
+  html += `<button class="lb-page-btn" id="lb-next" ${page === total ? 'disabled' : ''} aria-label="Next"><i class="ti ti-chevron-right"></i></button>`;
+  pag.innerHTML = html;
+
+  pag.querySelector('#lb-prev').addEventListener('click', () => { if (page > 1) renderLeaderboardPage(page - 1); });
+  pag.querySelector('#lb-next').addEventListener('click', () => { if (page < total) renderLeaderboardPage(page + 1); });
+  pag.querySelectorAll('[data-page]').forEach(b => {
+    b.addEventListener('click', () => renderLeaderboardPage(parseInt(b.dataset.page, 10)));
+  });
+}
+
+function renderYourRank() {
+  const box = document.getElementById('lb-yourank');
+  if (!YOU_DATA) { box.setAttribute('hidden', ''); return; }
+  box.removeAttribute('hidden');
+  document.getElementById('lb-yourank-rank').textContent = '#' + YOU_RANK;
+  document.getElementById('lb-yourank-name').textContent = YOU_DATA.name;
+  document.getElementById('lb-yourank-tier').textContent = fmtTier(YOU_DATA.tier);
+  document.getElementById('lb-yourank-time').textContent = formatElapsed(YOU_DATA.seconds);
+}
+
+function renderLeaderboardMeta() {
+  document.getElementById('lb-meta-count').textContent =
+    SORTED_LB.length.toLocaleString('en-US') + ' players';
+  document.getElementById('lb-meta-updated').textContent = 'updated just now';
+}
+
+const leaderboardModal = document.getElementById('leaderboard-modal');
+function openLeaderboard() {
+  renderLeaderboardMeta();
+  renderYourRank();
+  // Open on the page containing the player; fall back to page 1
+  const targetPage = YOU_RANK > 0 ? Math.ceil(YOU_RANK / LB_PAGE_SIZE) : 1;
+  renderLeaderboardPage(targetPage);
+  leaderboardModal.removeAttribute('hidden');
+}
+function closeLeaderboard() { leaderboardModal.setAttribute('hidden', ''); }
+
+document.getElementById('leaderboard-btn').addEventListener('click', openLeaderboard);
+document.getElementById('leaderboard-close').addEventListener('click', closeLeaderboard);
+leaderboardModal.addEventListener('click', (e) => {
+  if (e.target === leaderboardModal) closeLeaderboard();
+});
+document.getElementById('lb-jump-btn').addEventListener('click', () => {
+  if (!YOU_RANK) return;
+  const targetPage = Math.ceil(YOU_RANK / LB_PAGE_SIZE);
+  renderLeaderboardPage(targetPage);
+  // Scroll the highlighted row into view
+  setTimeout(() => {
+    const row = document.querySelector(`.lb-row[data-rank="${YOU_RANK}"]`);
+    if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 50);
+});
+document.querySelectorAll('.lb-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.lb-tab').forEach(x => x.classList.toggle('selected', x === t));
+    // Mock — every tab shows the same dataset for now
+    renderLeaderboardPage(1);
+  });
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !leaderboardModal.hasAttribute('hidden')) {
+    closeLeaderboard();
+  }
+});
+
+render();
+if (pendingScrollTop > 0) {
+  scrollEl.scrollTop = pendingScrollTop;
+  pendingScrollTop = 0;
+}
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
